@@ -1,0 +1,55 @@
+# Latest upstream application and paired Gorge; existing ingress, identity and data volumes retained.
+services:
+  phorge:
+    image: team-management/phorge:965a72308747
+    pull_policy: never
+    volumes: !override
+    - phorge-conf:/opt/phorge/phorge/conf/local
+    - phorge-repo:/var/repo
+    - ./config/phorge/extensions/TeamEntrySessionGuard.php:/opt/phorge/phorge/src/extensions/TeamEntrySessionGuard.php:ro
+    - ./config/phorge/extensions/TeamPrivateDefaults.php:/opt/phorge/phorge/src/extensions/TeamPrivateDefaults.php:ro
+    - ./config/phorge/legacy/LegacyTeamPolicyReaders.php:/opt/phorge/phorge/src/extensions/LegacyTeamPolicyReaders.php:ro
+    - ./config/phorge-apache.conf:/etc/apache2/sites-available/000-default.conf:ro
+    - ./config/phorge-trusted-proxy.php:/etc/phorge/trusted-proxy.php:ro
+  phorge-daemon:
+    image: team-management/phorge:965a72308747
+    pull_policy: never
+    volumes: !override
+    - phorge-conf:/opt/phorge/phorge/conf/local
+    - phorge-repo:/var/repo
+    - ./config/phorge/extensions/TeamEntrySessionGuard.php:/opt/phorge/phorge/src/extensions/TeamEntrySessionGuard.php:ro
+    - ./config/phorge/extensions/TeamPrivateDefaults.php:/opt/phorge/phorge/src/extensions/TeamPrivateDefaults.php:ro
+    - ./config/phorge/legacy/LegacyTeamPolicyReaders.php:/opt/phorge/phorge/src/extensions/LegacyTeamPolicyReaders.php:ro
+  phorge-migrate:
+    image: team-management/phorge:965a72308747
+    pull_policy: never
+    volumes: !override
+    - phorge-conf:/opt/phorge/phorge/conf/local
+    - phorge-repo:/var/repo
+    - ./config/phorge/extensions/TeamEntrySessionGuard.php:/opt/phorge/phorge/src/extensions/TeamEntrySessionGuard.php:ro
+    - ./config/phorge/extensions/TeamPrivateDefaults.php:/opt/phorge/phorge/src/extensions/TeamPrivateDefaults.php:ro
+    - ./config/phorge/legacy/LegacyTeamPolicyReaders.php:/opt/phorge/phorge/src/extensions/LegacyTeamPolicyReaders.php:ro
+  gorge-render:
+    image: team-management/gorge-render:55f8ba8e57b1
+    pull_policy: never
+  gorge-conduit:
+    image: team-management/gorge-conduit:55f8ba8e57b1
+    pull_policy: never
+  gorge-notification:
+    image: team-management/gorge-notification:55f8ba8e57b1
+    pull_policy: never
+  gorge-file-storage:
+    image: team-management/gorge-file-storage:55f8ba8e57b1
+    pull_policy: never
+  gorge-webhook:
+    image: team-management/gorge-webhook:55f8ba8e57b1
+    pull_policy: never
+  gorge-taskqueue:
+    image: team-management/gorge-taskqueue:55f8ba8e57b1
+    pull_policy: never
+  gorge-worker:
+    image: team-management/gorge-worker:55f8ba8e57b1
+    pull_policy: never
+  gorge-db-api:
+    image: team-management/gorge-db-api:55f8ba8e57b1
+    pull_policy: never
