@@ -1,0 +1,822 @@
+name: team-management
+services:
+  mysql:
+    image: ${MYSQL_IMAGE:-mysql:8.0.46}
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: phorge
+      MYSQL_USER: phorge
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?Set MYSQL_PASSWORD}
+    command:
+    - --sql-mode=STRICT_ALL_TABLES
+    - --max-allowed-packet=134217728
+    - --innodb-buffer-pool-size=512M
+    - --local-infile=0
+    - --ft-min-word-len=3
+    - --partial-revokes=ON
+    volumes:
+    - phorge-db:/var/lib/mysql
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - MYSQL_PWD="$${MYSQL_ROOT_PASSWORD}" mysql --protocol=TCP -h 127.0.0.1 -P 3306
+        -u root --batch --skip-column-names -e "SELECT 1" >/dev/null
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
+    mem_limit: 1g
+    cpus: 1.0
+    pids_limit: 256
+    security_opt:
+    - no-new-privileges:true
+    networks:
+      core: {}
+  db-init:
+    image: ${MYSQL_IMAGE:-mysql:8.0.46}
+    restart: 'no'
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      MYSQL_PWD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD}
+    volumes:
+    - ./state/mysql-accounts.sql:/run/accounts.sql:ro
+    command:
+    - sh
+    - -ec
+    - mysql --protocol=TCP -h mysql -P 3306 -u root < /run/accounts.sql
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
+    mem_limit: 128m
+    cpus: 0.5
+    pids_limit: 128
+    security_opt:
+    - no-new-privileges:true
+    networks:
+      core: {}
+  gorge-render:
+    image: team-management/gorge-render:f1130b7
+    restart: unless-stopped
+    environment:
+      GORGE_LISTEN_ADDR: :8140
+      GORGE_SERVICE_TOKEN: ${GORGE_RENDER_TOKEN:?Set GORGE_RENDER_TOKEN}
+      GORGE_RENDER_MAX_BYTES: ${GORGE_RENDER_MAX_BYTES:-1048576}
+      GORGE_DIFF_MAX_BYTES: ${GORGE_DIFF_MAX_BYTES:-1048576}
+      GORGE_RENDER_TIMEOUT_SEC: ${GORGE_RENDER_TIMEOUT_SEC:-15}
+      GORGE_RENDER_ENABLE_DIFF: 'true'
+    healthcheck:
+      test:
+      - CMD
+      - wget
+      - -qO-
+      - http://127.0.0.1:8140/healthz
+      interval: 10s
+      timeout: 3s
+      start_period: 5s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
+    mem_limit: 256m
+    cpus: 0.5
+    pids_limit: 128
+    security_opt:
+    - no-new-privileges:true
+    pull_policy: never
+    networks:
+      rpc: {}
+    cap_drop:
+    - ALL
+    read_only: true
+    tmpfs:
+    - /tmp:rw,noexec,nosuid,size=32m
+  gorge-conduit:
+    image: team-management/gorge-conduit:f1130b7
+    restart: unless-stopped
+    environment:
+      GORGE_LISTEN_ADDR: :8150
+      GORGE_SERVICE_TOKEN: ${GORGE_CONDUIT_TOKEN:?Set GORGE_CONDUIT_TOKEN}
+      GORGE_CONDUIT_UPSTREAM_URL: ${GORGE_CONDUIT_UPSTREAM_URL:-http://phorge:80}
+      GORGE_CONDUIT_PROXY_TIMEOUT_SEC: ${GORGE_CONDUIT_PROXY_TIMEOUT_SEC:-30}
+      GORGE_CONDUIT_MAX_BODY_SIZE: ${GORGE_CONDUIT_MAX_BODY_SIZE:-8388608}
+      GORGE_CONDUIT_RATE_LIMIT_RPS: ${GORGE_CONDUIT_RATE_LIMIT_RPS:-20}
+      GORGE_CONDUIT_RATE_LIMIT_BURST: ${GORGE_CONDUIT_RATE_LIMIT_BURST:-40}
+    healthcheck:
+      test:
+      - CMD
+      - wget
+      - -qO-
+      - http://127.0.0.1:8150/healthz
+      interval: 10s
+      timeout: 3s
+      start_period: 5s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
+    mem_limit: 128m
+    cpus: 0.5
+    pids_limit: 128
+    security_opt:
+    - no-new-privileges:true
+    pull_policy: never
+    networks:
+      rpc: {}
+    cap_drop:
+    - ALL
+    read_only: true
+    tmpfs:
+    - /tmp:rw,noexec,nosuid,size=32m
+  gorge-notification:
+    image: team-management/gorge-notification:f1130b7
+    restart: unless-stopped
+    environment:
+      GORGE_NOTIFICATION_CONFIG_FILE: /etc/gorge/notification.json
+    healthcheck:
+      test:
+      - CMD
+      - wget
+      - -qO-
+      - http://172.29.241.10:22281/healthz
+      interval: 10s
+      timeout: 3s
+      start_period: 5s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
+    mem_limit: 128m
+    cpus: 0.5
+    pids_limit: 128
+    security_opt:
+    - no-new-privileges:true
+    pull_policy: never
+    networks:
+      notify_admin:
+        ipv4_address: 172.29.241.10
+      notify_client:
+        ipv4_address: 172.29.242.10
+    cap_drop:
+    - ALL
+    read_only: true
+    tmpfs:
+    - /tmp:rw,noexec,nosuid,size=32m
+    volumes:
+    - ./config/notification.json:/etc/gorge/notification.json:ro
+  gorge-file-storage:
+    image: team-management/gorge-file-storage:f1130b7
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
+    environment:
+      GORGE_LISTEN_ADDR: :8100
+      GORGE_SERVICE_TOKEN: ${GORGE_FILE_TOKEN:?Set GORGE_FILE_TOKEN}
+      GORGE_FILE_UPLOAD_ROOT: ''
+      GORGE_FILE_DELETION_DSN: ''
+      GORGE_FILE_MYSQL_HOST: mysql
+      GORGE_FILE_MYSQL_PORT: '3306'
+      GORGE_FILE_MYSQL_USER: gorge_file
+      GORGE_FILE_MYSQL_PASS: ${GORGE_FILE_MYSQL_PASSWORD:?Set GORGE_FILE_MYSQL_PASSWORD}
+      GORGE_FILE_NAMESPACE: ${PHORGE_DB_NAMESPACE:-phabricator}
+      GORGE_FILE_MYSQL_BLOB_MAX_SIZE: ${GORGE_FILE_MYSQL_BLOB_MAX_SIZE:-1048576}
+      GORGE_FILE_LOCAL_DISK_PATH: /var/lib/gorge/files
+      GORGE_FILE_S3_BUCKET: ${GORGE_FILE_S3_BUCKET:-}
+      GORGE_FILE_S3_REGION: ${GORGE_FILE_S3_REGION:-}
+      GORGE_FILE_S3_ENDPOINT: ${GORGE_FILE_S3_ENDPOINT:-}
+      GORGE_FILE_S3_ACCESS_KEY: ${GORGE_FILE_S3_ACCESS_KEY:-}
+      GORGE_FILE_S3_SECRET_KEY: ${GORGE_FILE_S3_SECRET_KEY:-}
+    volumes:
+    - phorge-files:/var/lib/gorge/files
+    healthcheck:
+      test:
+      - CMD
+      - wget
+      - -qO-
+      - http://127.0.0.1:8100/readyz
+      interval: 10s
+      timeout: 3s
+      start_period: 5s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
+    mem_limit: 128m
+    cpus: 0.5
+    pids_limit: 128
+    security_opt:
+    - no-new-privileges:true
+    pull_policy: never
+    networks:
+      rpc: {}
+      core: {}
+    cap_drop:
+    - ALL
+    read_only: true
+    tmpfs:
+    - /tmp:rw,noexec,nosuid,size=32m
+  gorge-webhook:
+    image: team-management/gorge-webhook:f1130b7
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
+    environment:
+      GORGE_LISTEN_ADDR: :8160
+      GORGE_SERVICE_TOKEN: ${GORGE_WEBHOOK_TOKEN:?Set GORGE_WEBHOOK_TOKEN}
+      GORGE_WEBHOOK_MYSQL_HOST: mysql
+      GORGE_WEBHOOK_MYSQL_PORT: '3306'
+      GORGE_WEBHOOK_MYSQL_USER: gorge_webhook
+      GORGE_WEBHOOK_MYSQL_PASS: ${GORGE_WEBHOOK_MYSQL_PASSWORD:?Set GORGE_WEBHOOK_MYSQL_PASSWORD}
+      GORGE_WEBHOOK_NAMESPACE: ${PHORGE_DB_NAMESPACE:-phabricator}
+      GORGE_WEBHOOK_POLL_INTERVAL_MS: ${GORGE_WEBHOOK_POLL_INTERVAL_MS:-}
+      GORGE_WEBHOOK_DELIVERY_TIMEOUT: ${GORGE_WEBHOOK_DELIVERY_TIMEOUT:-}
+      GORGE_WEBHOOK_MAX_CONCURRENT: ${GORGE_WEBHOOK_MAX_CONCURRENT:-}
+      GORGE_WEBHOOK_ERROR_THRESHOLD: ${GORGE_WEBHOOK_ERROR_THRESHOLD:-}
+      GORGE_WEBHOOK_ERROR_BACKOFF_SEC: ${GORGE_WEBHOOK_ERROR_BACKOFF_SEC:-}
+      GORGE_WEBHOOK_RETRY_BACKOFF_SEC: ${GORGE_WEBHOOK_RETRY_BACKOFF_SEC:-}
+      GORGE_WEBHOOK_CLAIM_LEASE_SEC: ${GORGE_WEBHOOK_CLAIM_LEASE_SEC:-}
+    healthcheck:
+      test:
+      - CMD
+      - wget
+      - -qO-
+      - http://127.0.0.1:8160/readyz
+      interval: 10s
+      timeout: 3s
+      start_period: 5s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
+    mem_limit: 128m
+    cpus: 0.5
+    pids_limit: 128
+    security_opt:
+    - no-new-privileges:true
+    pull_policy: never
+    networks:
+      rpc: {}
+      core: {}
+      core_egress: {}
+    cap_drop:
+    - ALL
+    read_only: true
+    tmpfs:
+    - /tmp:rw,noexec,nosuid,size=32m
+  gorge-taskqueue:
+    image: team-management/gorge-taskqueue:f1130b7
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
+    environment:
+      GORGE_LISTEN_ADDR: :8090
+      GORGE_SERVICE_TOKEN: ${GORGE_TASKQUEUE_TOKEN:?Set GORGE_TASKQUEUE_TOKEN}
+      GORGE_TASKQUEUE_BACKEND: ${GORGE_TASKQUEUE_BACKEND:-mysql}
+      GORGE_TASKQUEUE_SCHEDULER_ENABLED: ${GORGE_TASKQUEUE_SCHEDULER_ENABLED:-false}
+      GORGE_TASKQUEUE_SCHEDULER_CONDUIT_URI: ${GORGE_TASKQUEUE_SCHEDULER_CONDUIT_URI:-http://gorge-conduit:8150}
+      GORGE_TASKQUEUE_SCHEDULER_CONDUIT_TOKEN: ${GORGE_CONDUIT_TOKEN:-}
+      GORGE_TASKQUEUE_MYSQL_HOST: mysql
+      GORGE_TASKQUEUE_MYSQL_PORT: '3306'
+      GORGE_TASKQUEUE_MYSQL_USER: gorge_queue
+      GORGE_TASKQUEUE_MYSQL_PASS: ${GORGE_QUEUE_MYSQL_PASSWORD:?Set GORGE_QUEUE_MYSQL_PASSWORD}
+      GORGE_TASKQUEUE_NAMESPACE: ${PHORGE_DB_NAMESPACE:-phabricator}
+      GORGE_TASKQUEUE_REDIS_ADDR: ${GORGE_TASKQUEUE_REDIS_ADDR:-}
+      GORGE_TASKQUEUE_REDIS_PASSWORD: ${GORGE_TASKQUEUE_REDIS_PASSWORD:-}
+      GORGE_TASKQUEUE_REDIS_DB: ${GORGE_TASKQUEUE_REDIS_DB:-0}
+      GORGE_TASKQUEUE_REDIS_KEY_PREFIX: ${GORGE_TASKQUEUE_REDIS_KEY_PREFIX:-gorge:tq:}
+      GORGE_TASKQUEUE_LEASE_DURATION: ${GORGE_TASKQUEUE_LEASE_DURATION:-7200}
+      GORGE_TASKQUEUE_RETRY_WAIT: ${GORGE_TASKQUEUE_RETRY_WAIT:-300}
+    healthcheck:
+      test:
+      - CMD
+      - wget
+      - -qO-
+      - http://127.0.0.1:8090/readyz
+      interval: 10s
+      timeout: 3s
+      start_period: 5s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
+    mem_limit: 128m
+    cpus: 0.5
+    pids_limit: 128
+    security_opt:
+    - no-new-privileges:true
+    pull_policy: never
+    networks:
+      rpc: {}
+      core: {}
+    cap_drop:
+    - ALL
+    read_only: true
+    tmpfs:
+    - /tmp:rw,noexec,nosuid,size=32m
+  gorge-worker:
+    image: team-management/gorge-worker:f1130b7
+    restart: unless-stopped
+    stop_grace_period: 45s
+    depends_on:
+      gorge-taskqueue:
+        condition: service_started
+      phorge-migrate:
+        condition: service_completed_successfully
+    environment:
+      GORGE_LISTEN_ADDR: :8170
+      GORGE_SERVICE_TOKEN: ${GORGE_WORKER_TOKEN:?Set GORGE_WORKER_TOKEN}
+      GORGE_WORKER_TASK_QUEUE_URL: ${GORGE_WORKER_TASK_QUEUE_URL:-http://gorge-taskqueue:8090}
+      GORGE_WORKER_TASK_QUEUE_TOKEN: ${GORGE_TASKQUEUE_TOKEN:?Set GORGE_TASKQUEUE_TOKEN}
+      GORGE_WORKER_CONDUIT_URL: ${GORGE_WORKER_CONDUIT_URL:-http://gorge-conduit:8150}
+      GORGE_WORKER_CONDUIT_TOKEN: ${GORGE_CONDUIT_TOKEN:?Set GORGE_CONDUIT_TOKEN}
+      GORGE_WORKER_LEASE_LIMIT: ${GORGE_WORKER_LEASE_LIMIT:-4}
+      GORGE_WORKER_POLL_INTERVAL_MS: ${GORGE_WORKER_POLL_INTERVAL_MS:-1000}
+      GORGE_WORKER_MAX_WORKERS: ${GORGE_WORKER_MAX_WORKERS:-4}
+      GORGE_WORKER_IDLE_TIMEOUT_SEC: ${GORGE_WORKER_IDLE_TIMEOUT_SEC:-180}
+      GORGE_WORKER_DRAIN_TIMEOUT_SEC: '30'
+      GORGE_WORKER_TASK_CLASS_FILTER: ${GORGE_WORKER_TASK_CLASS_FILTER:-}
+      GORGE_WORKER_MAIL_OUTBOX_DSN: ''
+      GORGE_WORKER_MAILER_URL: ''
+      GORGE_WORKER_MAILER_TOKEN: ''
+      GORGE_WORKER_OUTBOX_DSN: gorge_feed:${GORGE_FEED_MYSQL_PASSWORD:?Set GORGE_FEED_MYSQL_PASSWORD}@tcp(mysql:3306)/${PHORGE_DB_NAMESPACE:-phabricator}_feed
+      GORGE_WORKER_FEED_POLICY_FILE: /etc/phorge/feed-policy.json
+      GORGE_WORKER_NOTIFICATION_MODE: native
+      GORGE_WORKER_NOTIFICATION_POLICY_FILE: ${GORGE_WORKER_NOTIFICATION_POLICY_FILE:-/etc/phorge/notification-policy.json}
+    volumes:
+    - phorge-conf:/etc/phorge:ro
+    healthcheck:
+      test:
+      - CMD
+      - wget
+      - -qO-
+      - http://127.0.0.1:8170/readyz
+      interval: 10s
+      timeout: 6s
+      start_period: 60s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
+    mem_limit: 128m
+    cpus: 0.5
+    pids_limit: 128
+    security_opt:
+    - no-new-privileges:true
+    pull_policy: never
+    networks:
+      rpc: {}
+      core: {}
+      notify_admin: {}
+      core_egress: {}
+    cap_drop:
+    - ALL
+    read_only: true
+    tmpfs:
+    - /tmp:rw,noexec,nosuid,size=32m
+  gorge-db-api:
+    image: team-management/gorge-db-api:f1130b7
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
+    environment:
+      GORGE_LISTEN_ADDR: :8080
+      GORGE_SERVICE_TOKEN: ${GORGE_DB_TOKEN:?Set GORGE_DB_TOKEN}
+      GORGE_DB_MYSQL_HOST: mysql
+      GORGE_DB_MYSQL_PORT: '3306'
+      GORGE_DB_MYSQL_USER: gorge_db
+      GORGE_DB_MYSQL_PASS: ${GORGE_DB_MYSQL_PASSWORD:?Set GORGE_DB_MYSQL_PASSWORD}
+      GORGE_DB_NAMESPACE: ${PHORGE_DB_NAMESPACE:-phabricator}
+      GORGE_DB_CONFIG_FILE: ${GORGE_DB_CONFIG_FILE:-}
+    healthcheck:
+      test:
+      - CMD
+      - wget
+      - -qO-
+      - http://127.0.0.1:8080/healthz
+      interval: 10s
+      timeout: 3s
+      start_period: 5s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
+    mem_limit: 128m
+    cpus: 0.5
+    pids_limit: 128
+    security_opt:
+    - no-new-privileges:true
+    pull_policy: never
+    networks:
+      rpc: {}
+      core: {}
+    cap_drop:
+    - ALL
+    read_only: true
+    tmpfs:
+    - /tmp:rw,noexec,nosuid,size=32m
+  phorge-migrate:
+    image: team-management/phorge:e5141c7
+    volumes:
+    - phorge-conf:/opt/phorge/phorge/conf/local
+    - phorge-repo:/var/repo
+    - ./config/phorge/extensions/TeamEntrySessionGuard.php:/opt/phorge/phorge/src/extensions/TeamEntrySessionGuard.php:ro
+    - ./config/phorge/overrides/PhabricatorFileQuery.php:/opt/phorge/phorge/src/applications/files/query/PhabricatorFileQuery.php:ro
+    - ./config/phorge/overrides/PhabricatorProject.php:/opt/phorge/phorge/src/applications/project/storage/PhabricatorProject.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectApplication.php:/opt/phorge/phorge/src/applications/project/application/PhabricatorProjectApplication.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectController.php:/opt/phorge/phorge/src/applications/project/controller/PhabricatorProjectController.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectEditController.php:/opt/phorge/phorge/src/applications/project/controller/PhabricatorProjectEditController.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectEditEngine.php:/opt/phorge/phorge/src/applications/project/engine/PhabricatorProjectEditEngine.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectListController.php:/opt/phorge/phorge/src/applications/project/controller/PhabricatorProjectListController.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectListView.php:/opt/phorge/phorge/src/applications/project/view/PhabricatorProjectListView.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectMemberListView.php:/opt/phorge/phorge/src/applications/project/view/PhabricatorProjectMemberListView.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectMembersAddController.php:/opt/phorge/phorge/src/applications/project/controller/PhabricatorProjectMembersAddController.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectMembersRemoveController.php:/opt/phorge/phorge/src/applications/project/controller/PhabricatorProjectMembersRemoveController.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectMembersViewController.php:/opt/phorge/phorge/src/applications/project/controller/PhabricatorProjectMembersViewController.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectProfileController.php:/opt/phorge/phorge/src/applications/project/controller/PhabricatorProjectProfileController.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectProfileMenuEngine.php:/opt/phorge/phorge/src/applications/project/engine/PhabricatorProjectProfileMenuEngine.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectSearchEngine.php:/opt/phorge/phorge/src/applications/project/query/PhabricatorProjectSearchEngine.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectSubprojectWarningController.php:/opt/phorge/phorge/src/applications/project/controller/PhabricatorProjectSubprojectWarningController.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectSubprojectsController.php:/opt/phorge/phorge/src/applications/project/controller/PhabricatorProjectSubprojectsController.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectTransactionEditor.php:/opt/phorge/phorge/src/applications/project/editor/PhabricatorProjectTransactionEditor.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectUpdateController.php:/opt/phorge/phorge/src/applications/project/controller/PhabricatorProjectUpdateController.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectUserListView.php:/opt/phorge/phorge/src/applications/project/view/PhabricatorProjectUserListView.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectsMembershipIndexEngineExtension.php:/opt/phorge/phorge/src/applications/project/engineextension/PhabricatorProjectsMembershipIndexEngineExtension.php:ro
+    - ./config/phorge/overrides/PhabricatorPeopleProfileController.php:/opt/phorge/phorge/src/applications/people/controller/PhabricatorPeopleProfileController.php:ro
+    - ./config/phorge/extensions/TeamProjectProgress.php:/opt/phorge/phorge/src/extensions/TeamProjectProgress.php:ro
+    - ./config/phorge/extensions/TeamProjectProgressController.php:/opt/phorge/phorge/src/extensions/TeamProjectProgressController.php:ro
+    - ./config/phorge/extensions/TeamProjectProgressMenuItem.php:/opt/phorge/phorge/src/extensions/TeamProjectProgressMenuItem.php:ro
+    - ./config/phorge/extensions/TeamOrganization.php:/opt/phorge/phorge/src/extensions/TeamOrganization.php:ro
+    - ./config/phorge/extensions/TeamOrganizationPolicy.php:/opt/phorge/phorge/src/extensions/TeamOrganizationPolicy.php:ro
+    - ./config/phorge/extensions/TeamOrganizationApplication.php:/opt/phorge/phorge/src/extensions/TeamOrganizationApplication.php:ro
+    - ./config/phorge/extensions/TeamMaintenanceApplication.php:/opt/phorge/phorge/src/extensions/TeamMaintenanceApplication.php:ro
+    - ./config/phorge/organization/20261027.organization.sql:/opt/phorge/phorge/resources/sql/team-organization/20261027.organization.sql:ro
+    - ./config/phorge/overrides/AphrontFormPolicyControl.php:/opt/phorge/phorge/src/view/form/control/AphrontFormPolicyControl.php:ro
+    - ./config/phorge/extensions/TeamProjectMembership.php:/opt/phorge/phorge/src/extensions/TeamProjectMembership.php:ro
+    - ./config/phorge/extensions/TeamProjectMemberImport.php:/opt/phorge/phorge/src/extensions/TeamProjectMemberImport.php:ro
+    - ./config/phorge/extensions/TeamProjectTeamPolicy.php:/opt/phorge/phorge/src/extensions/TeamProjectTeamPolicy.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectBoardViewController.php:/opt/phorge/phorge/src/applications/project/controller/PhabricatorProjectBoardViewController.php:ro
+    - ./config/phorge/overrides/ManiphestEditEngine.php:/opt/phorge/phorge/src/applications/maniphest/editor/ManiphestEditEngine.php:ro
+    - ./config/phorge/overrides/PhabricatorManiphestConfigOptions.php:/opt/phorge/phorge/src/applications/maniphest/config/PhabricatorManiphestConfigOptions.php:ro
+    - ./config/phorge/overrides/ProjectBoardTaskCard.php:/opt/phorge/phorge/src/applications/project/view/ProjectBoardTaskCard.php:ro
+    - ./config/phorge/overrides/PhabricatorPolicyRulesView.php:/opt/phorge/phorge/src/applications/policy/view/PhabricatorPolicyRulesView.php:ro
+    - ./config/phorge/overrides/PhabricatorChineseTranslation.php:/opt/phorge/phorge/src/infrastructure/internationalization/translation/PhabricatorChineseTranslation.php:ro
+    - ./config/phorge/overrides/PhabricatorPolicyEditController.php:/opt/phorge/phorge/src/applications/policy/controller/PhabricatorPolicyEditController.php:ro
+    restart: 'no'
+    depends_on:
+      mysql:
+        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
+      gorge-render:
+        condition: service_started
+      gorge-conduit:
+        condition: service_started
+      gorge-notification:
+        condition: service_started
+      gorge-file-storage:
+        condition: service_started
+      gorge-webhook:
+        condition: service_started
+      gorge-taskqueue:
+        condition: service_started
+      gorge-db-api:
+        condition: service_started
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_PORT: '3306'
+      MYSQL_USER: phorge
+      MYSQL_PASS: ${MYSQL_PASSWORD:?Set MYSQL_PASSWORD}
+      PHORGE_BASE_URI: ${PHORGE_BASE_URI:?Set PHORGE_BASE_URI}
+      PHORGE_TIMEZONE: Asia/Shanghai
+      PHORGE_WAIT_DB: ${PHORGE_WAIT_DB:-1}
+      PHORGE_DB_NAMESPACE: ${PHORGE_DB_NAMESPACE:-phabricator}
+      PHORGE_GORGE_POLICY: required
+      PHORGE_CONTROL_PLANE: deployment
+      PHORGE_GORGE_STARTUP_TIMEOUT: '180'
+      GORGE_WORKER_URI: ${GORGE_WORKER_URI:-http://gorge-worker:8170}
+      GORGE_WORKER_TOKEN: ${GORGE_WORKER_TOKEN:?Set GORGE_WORKER_TOKEN}
+      GORGE_MAIL_DELIVERY_MODE: ${GORGE_MAIL_DELIVERY_MODE:-legacy}
+      PHORGE_CONTAINER_ROLE: migrate
+      PHORGE_AUTO_UPGRADE: '1'
+      PHORGE_PRODUCT_PROFILE: collaboration
+      GITEA_BASE_URI: ${GITEA_BASE_URI:-}
+      GORGE_RENDER_URI: ${GORGE_RENDER_URI:-http://gorge-render:8140}
+      GORGE_RENDER_TOKEN: ${GORGE_RENDER_TOKEN:?Set GORGE_RENDER_TOKEN}
+      GORGE_CONDUIT_URI: ${GORGE_CONDUIT_URI:-http://gorge-conduit:8150}
+      GORGE_CONDUIT_TOKEN: ${GORGE_CONDUIT_TOKEN:?Set GORGE_CONDUIT_TOKEN}
+      GORGE_CONDUIT_UPSTREAM_URL: ${GORGE_CONDUIT_UPSTREAM_URL:-http://phorge:80}
+      GORGE_NOTIFICATION_ADMIN_HOST: 172.29.241.10
+      GORGE_NOTIFICATION_ADMIN_PORT: '22281'
+      GORGE_NOTIFICATION_CLIENT_HOST: ${PHORGE_HOST:?Set PHORGE_HOST}
+      GORGE_NOTIFICATION_CLIENT_PORT: ${PUBLIC_HTTPS_PORT:-8443}
+      GORGE_NOTIFICATION_CLIENT_PROTOCOL: https
+      GORGE_NOTIFICATION_CLIENT_PATH: /ws/
+      GORGE_NOTIFICATION_MODE: enable
+      GORGE_NOTIFICATION_OUTBOX: 'true'
+      GORGE_FILE_URI: ${GORGE_FILE_URI:-http://gorge-file-storage:8100}
+      GORGE_FILE_TOKEN: ${GORGE_FILE_TOKEN:?Set GORGE_FILE_TOKEN}
+      GORGE_FILE_UPLOADS: 'false'
+      GORGE_FILE_DELETION_OUTBOX: 'false'
+      GORGE_WEBHOOK_URI: ${GORGE_WEBHOOK_URI:-http://gorge-webhook:8160}
+      GORGE_WEBHOOK_TOKEN: ${GORGE_WEBHOOK_TOKEN:?Set GORGE_WEBHOOK_TOKEN}
+      GORGE_WEBHOOK_MODE: ${GORGE_WEBHOOK_MODE:-enable}
+      GORGE_TASKQUEUE_URI: ${GORGE_TASKQUEUE_URI:-http://gorge-taskqueue:8090}
+      GORGE_TASKQUEUE_TOKEN: ${GORGE_TASKQUEUE_TOKEN:?Set GORGE_TASKQUEUE_TOKEN}
+      GORGE_TASKQUEUE_MODE: ${GORGE_TASKQUEUE_MODE:-enable}
+      GORGE_DB_URL: ${GORGE_DB_URL-http://gorge-db-api:8080}
+      GORGE_DB_TOKEN: ${GORGE_DB_TOKEN:?Set GORGE_DB_TOKEN}
+      GORGE_DB_MODE: ${GORGE_DB_MODE:-enable}
+      GORGE_MAILER_MODE: disable
+      GORGE_MAILER_KEY: ${GORGE_MAILER_KEY:-gorge-mailer}
+      GORGE_SEARCH_MODE: disable
+    command:
+    - /opt/phorge/phorge/bin/config
+    - set
+    - phabricator.allowed-uris
+    - '["http://phorge/"]'
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
+    mem_limit: 512m
+    cpus: 1.0
+    pids_limit: 128
+    security_opt:
+    - no-new-privileges:true
+    pull_policy: never
+    networks:
+      core: {}
+      rpc: {}
+      notify_admin: {}
+  phorge:
+    image: team-management/phorge:e5141c7
+    volumes:
+    - phorge-conf:/opt/phorge/phorge/conf/local
+    - phorge-repo:/var/repo
+    - ./config/phorge-apache.conf:/etc/apache2/sites-available/000-default.conf:ro
+    - ./config/phorge-trusted-proxy.php:/etc/phorge/trusted-proxy.php:ro
+    - ./config/phorge/extensions/TeamEntrySessionGuard.php:/opt/phorge/phorge/src/extensions/TeamEntrySessionGuard.php:ro
+    - ./config/phorge/overrides/PhabricatorFileQuery.php:/opt/phorge/phorge/src/applications/files/query/PhabricatorFileQuery.php:ro
+    - ./config/phorge/overrides/PhabricatorProject.php:/opt/phorge/phorge/src/applications/project/storage/PhabricatorProject.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectApplication.php:/opt/phorge/phorge/src/applications/project/application/PhabricatorProjectApplication.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectController.php:/opt/phorge/phorge/src/applications/project/controller/PhabricatorProjectController.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectEditController.php:/opt/phorge/phorge/src/applications/project/controller/PhabricatorProjectEditController.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectEditEngine.php:/opt/phorge/phorge/src/applications/project/engine/PhabricatorProjectEditEngine.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectListController.php:/opt/phorge/phorge/src/applications/project/controller/PhabricatorProjectListController.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectListView.php:/opt/phorge/phorge/src/applications/project/view/PhabricatorProjectListView.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectMemberListView.php:/opt/phorge/phorge/src/applications/project/view/PhabricatorProjectMemberListView.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectMembersAddController.php:/opt/phorge/phorge/src/applications/project/controller/PhabricatorProjectMembersAddController.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectMembersRemoveController.php:/opt/phorge/phorge/src/applications/project/controller/PhabricatorProjectMembersRemoveController.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectMembersViewController.php:/opt/phorge/phorge/src/applications/project/controller/PhabricatorProjectMembersViewController.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectProfileController.php:/opt/phorge/phorge/src/applications/project/controller/PhabricatorProjectProfileController.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectProfileMenuEngine.php:/opt/phorge/phorge/src/applications/project/engine/PhabricatorProjectProfileMenuEngine.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectSearchEngine.php:/opt/phorge/phorge/src/applications/project/query/PhabricatorProjectSearchEngine.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectSubprojectWarningController.php:/opt/phorge/phorge/src/applications/project/controller/PhabricatorProjectSubprojectWarningController.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectSubprojectsController.php:/opt/phorge/phorge/src/applications/project/controller/PhabricatorProjectSubprojectsController.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectTransactionEditor.php:/opt/phorge/phorge/src/applications/project/editor/PhabricatorProjectTransactionEditor.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectUpdateController.php:/opt/phorge/phorge/src/applications/project/controller/PhabricatorProjectUpdateController.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectUserListView.php:/opt/phorge/phorge/src/applications/project/view/PhabricatorProjectUserListView.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectsMembershipIndexEngineExtension.php:/opt/phorge/phorge/src/applications/project/engineextension/PhabricatorProjectsMembershipIndexEngineExtension.php:ro
+    - ./config/phorge/overrides/PhabricatorPeopleProfileController.php:/opt/phorge/phorge/src/applications/people/controller/PhabricatorPeopleProfileController.php:ro
+    - ./config/phorge/extensions/TeamProjectProgress.php:/opt/phorge/phorge/src/extensions/TeamProjectProgress.php:ro
+    - ./config/phorge/extensions/TeamProjectProgressController.php:/opt/phorge/phorge/src/extensions/TeamProjectProgressController.php:ro
+    - ./config/phorge/extensions/TeamProjectProgressMenuItem.php:/opt/phorge/phorge/src/extensions/TeamProjectProgressMenuItem.php:ro
+    - ./config/phorge/extensions/TeamOrganization.php:/opt/phorge/phorge/src/extensions/TeamOrganization.php:ro
+    - ./config/phorge/extensions/TeamOrganizationPolicy.php:/opt/phorge/phorge/src/extensions/TeamOrganizationPolicy.php:ro
+    - ./config/phorge/extensions/TeamOrganizationApplication.php:/opt/phorge/phorge/src/extensions/TeamOrganizationApplication.php:ro
+    - ./config/phorge/extensions/TeamMaintenanceApplication.php:/opt/phorge/phorge/src/extensions/TeamMaintenanceApplication.php:ro
+    - ./config/phorge/organization/20261027.organization.sql:/opt/phorge/phorge/resources/sql/team-organization/20261027.organization.sql:ro
+    - ./config/phorge/overrides/AphrontFormPolicyControl.php:/opt/phorge/phorge/src/view/form/control/AphrontFormPolicyControl.php:ro
+    - ./config/phorge/extensions/TeamProjectMembership.php:/opt/phorge/phorge/src/extensions/TeamProjectMembership.php:ro
+    - ./config/phorge/extensions/TeamProjectMemberImport.php:/opt/phorge/phorge/src/extensions/TeamProjectMemberImport.php:ro
+    - ./config/phorge/extensions/TeamProjectTeamPolicy.php:/opt/phorge/phorge/src/extensions/TeamProjectTeamPolicy.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectBoardViewController.php:/opt/phorge/phorge/src/applications/project/controller/PhabricatorProjectBoardViewController.php:ro
+    - ./config/phorge/overrides/ManiphestEditEngine.php:/opt/phorge/phorge/src/applications/maniphest/editor/ManiphestEditEngine.php:ro
+    - ./config/phorge/overrides/PhabricatorManiphestConfigOptions.php:/opt/phorge/phorge/src/applications/maniphest/config/PhabricatorManiphestConfigOptions.php:ro
+    - ./config/phorge/overrides/ProjectBoardTaskCard.php:/opt/phorge/phorge/src/applications/project/view/ProjectBoardTaskCard.php:ro
+    - ./config/phorge/overrides/PhabricatorPolicyRulesView.php:/opt/phorge/phorge/src/applications/policy/view/PhabricatorPolicyRulesView.php:ro
+    - ./config/phorge/overrides/PhabricatorChineseTranslation.php:/opt/phorge/phorge/src/infrastructure/internationalization/translation/PhabricatorChineseTranslation.php:ro
+    - ./config/phorge/overrides/PhabricatorPolicyEditController.php:/opt/phorge/phorge/src/applications/policy/controller/PhabricatorPolicyEditController.php:ro
+    restart: unless-stopped
+    depends_on:
+      phorge-migrate:
+        condition: service_completed_successfully
+      gorge-render:
+        condition: service_started
+      gorge-conduit:
+        condition: service_started
+      gorge-notification:
+        condition: service_started
+      gorge-file-storage:
+        condition: service_started
+      gorge-webhook:
+        condition: service_started
+      gorge-taskqueue:
+        condition: service_started
+      gorge-worker:
+        condition: service_started
+      gorge-db-api:
+        condition: service_started
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_PORT: '3306'
+      MYSQL_USER: phorge
+      MYSQL_PASS: ${MYSQL_PASSWORD:?Set MYSQL_PASSWORD}
+      PHORGE_BASE_URI: ${PHORGE_BASE_URI:?Set PHORGE_BASE_URI}
+      PHORGE_TIMEZONE: Asia/Shanghai
+      PHORGE_WAIT_DB: ${PHORGE_WAIT_DB:-1}
+      PHORGE_DB_NAMESPACE: ${PHORGE_DB_NAMESPACE:-phabricator}
+      PHORGE_GORGE_POLICY: required
+      PHORGE_CONTROL_PLANE: deployment
+      PHORGE_GORGE_STARTUP_TIMEOUT: '180'
+      GORGE_WORKER_URI: ${GORGE_WORKER_URI:-http://gorge-worker:8170}
+      GORGE_WORKER_TOKEN: ${GORGE_WORKER_TOKEN:?Set GORGE_WORKER_TOKEN}
+      GORGE_MAIL_DELIVERY_MODE: ${GORGE_MAIL_DELIVERY_MODE:-legacy}
+      PHORGE_CONTAINER_ROLE: web
+    healthcheck:
+      test:
+      - CMD
+      - php
+      - -r
+      - 'exit(@file_get_contents("http://127.0.0.1/status/", false, stream_context_create(array("http"
+        => array("timeout" => 4, "header" => "Host: ".(parse_url(getenv("PHORGE_BASE_URI")
+        ?: "http://127.0.0.1/", PHP_URL_HOST) ?: "127.0.0.1"))))) === false ? 1 :
+        0);'
+      interval: 15s
+      timeout: 5s
+      start_period: 60s
+      retries: 5
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
+    mem_limit: 512m
+    cpus: 1.0
+    pids_limit: 128
+    security_opt:
+    - no-new-privileges:true
+    pull_policy: never
+    networks:
+      core: {}
+      rpc: {}
+      notify_admin: {}
+      web: {}
+  phorge-daemon:
+    image: team-management/phorge:e5141c7
+    volumes:
+    - phorge-conf:/opt/phorge/phorge/conf/local
+    - phorge-repo:/var/repo
+    - ./config/phorge/extensions/TeamEntrySessionGuard.php:/opt/phorge/phorge/src/extensions/TeamEntrySessionGuard.php:ro
+    - ./config/phorge/overrides/PhabricatorFileQuery.php:/opt/phorge/phorge/src/applications/files/query/PhabricatorFileQuery.php:ro
+    - ./config/phorge/overrides/PhabricatorProject.php:/opt/phorge/phorge/src/applications/project/storage/PhabricatorProject.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectApplication.php:/opt/phorge/phorge/src/applications/project/application/PhabricatorProjectApplication.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectController.php:/opt/phorge/phorge/src/applications/project/controller/PhabricatorProjectController.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectEditController.php:/opt/phorge/phorge/src/applications/project/controller/PhabricatorProjectEditController.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectEditEngine.php:/opt/phorge/phorge/src/applications/project/engine/PhabricatorProjectEditEngine.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectListController.php:/opt/phorge/phorge/src/applications/project/controller/PhabricatorProjectListController.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectListView.php:/opt/phorge/phorge/src/applications/project/view/PhabricatorProjectListView.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectMemberListView.php:/opt/phorge/phorge/src/applications/project/view/PhabricatorProjectMemberListView.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectMembersAddController.php:/opt/phorge/phorge/src/applications/project/controller/PhabricatorProjectMembersAddController.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectMembersRemoveController.php:/opt/phorge/phorge/src/applications/project/controller/PhabricatorProjectMembersRemoveController.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectMembersViewController.php:/opt/phorge/phorge/src/applications/project/controller/PhabricatorProjectMembersViewController.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectProfileController.php:/opt/phorge/phorge/src/applications/project/controller/PhabricatorProjectProfileController.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectProfileMenuEngine.php:/opt/phorge/phorge/src/applications/project/engine/PhabricatorProjectProfileMenuEngine.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectSearchEngine.php:/opt/phorge/phorge/src/applications/project/query/PhabricatorProjectSearchEngine.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectSubprojectWarningController.php:/opt/phorge/phorge/src/applications/project/controller/PhabricatorProjectSubprojectWarningController.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectSubprojectsController.php:/opt/phorge/phorge/src/applications/project/controller/PhabricatorProjectSubprojectsController.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectTransactionEditor.php:/opt/phorge/phorge/src/applications/project/editor/PhabricatorProjectTransactionEditor.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectUpdateController.php:/opt/phorge/phorge/src/applications/project/controller/PhabricatorProjectUpdateController.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectUserListView.php:/opt/phorge/phorge/src/applications/project/view/PhabricatorProjectUserListView.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectsMembershipIndexEngineExtension.php:/opt/phorge/phorge/src/applications/project/engineextension/PhabricatorProjectsMembershipIndexEngineExtension.php:ro
+    - ./config/phorge/overrides/PhabricatorPeopleProfileController.php:/opt/phorge/phorge/src/applications/people/controller/PhabricatorPeopleProfileController.php:ro
+    - ./config/phorge/extensions/TeamProjectProgress.php:/opt/phorge/phorge/src/extensions/TeamProjectProgress.php:ro
+    - ./config/phorge/extensions/TeamProjectProgressController.php:/opt/phorge/phorge/src/extensions/TeamProjectProgressController.php:ro
+    - ./config/phorge/extensions/TeamProjectProgressMenuItem.php:/opt/phorge/phorge/src/extensions/TeamProjectProgressMenuItem.php:ro
+    - ./config/phorge/extensions/TeamOrganization.php:/opt/phorge/phorge/src/extensions/TeamOrganization.php:ro
+    - ./config/phorge/extensions/TeamOrganizationPolicy.php:/opt/phorge/phorge/src/extensions/TeamOrganizationPolicy.php:ro
+    - ./config/phorge/extensions/TeamOrganizationApplication.php:/opt/phorge/phorge/src/extensions/TeamOrganizationApplication.php:ro
+    - ./config/phorge/extensions/TeamMaintenanceApplication.php:/opt/phorge/phorge/src/extensions/TeamMaintenanceApplication.php:ro
+    - ./config/phorge/organization/20261027.organization.sql:/opt/phorge/phorge/resources/sql/team-organization/20261027.organization.sql:ro
+    - ./config/phorge/overrides/AphrontFormPolicyControl.php:/opt/phorge/phorge/src/view/form/control/AphrontFormPolicyControl.php:ro
+    - ./config/phorge/extensions/TeamProjectMembership.php:/opt/phorge/phorge/src/extensions/TeamProjectMembership.php:ro
+    - ./config/phorge/extensions/TeamProjectMemberImport.php:/opt/phorge/phorge/src/extensions/TeamProjectMemberImport.php:ro
+    - ./config/phorge/extensions/TeamProjectTeamPolicy.php:/opt/phorge/phorge/src/extensions/TeamProjectTeamPolicy.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectBoardViewController.php:/opt/phorge/phorge/src/applications/project/controller/PhabricatorProjectBoardViewController.php:ro
+    - ./config/phorge/overrides/ManiphestEditEngine.php:/opt/phorge/phorge/src/applications/maniphest/editor/ManiphestEditEngine.php:ro
+    - ./config/phorge/overrides/PhabricatorManiphestConfigOptions.php:/opt/phorge/phorge/src/applications/maniphest/config/PhabricatorManiphestConfigOptions.php:ro
+    - ./config/phorge/overrides/ProjectBoardTaskCard.php:/opt/phorge/phorge/src/applications/project/view/ProjectBoardTaskCard.php:ro
+    - ./config/phorge/overrides/PhabricatorPolicyRulesView.php:/opt/phorge/phorge/src/applications/policy/view/PhabricatorPolicyRulesView.php:ro
+    - ./config/phorge/overrides/PhabricatorChineseTranslation.php:/opt/phorge/phorge/src/infrastructure/internationalization/translation/PhabricatorChineseTranslation.php:ro
+    - ./config/phorge/overrides/PhabricatorPolicyEditController.php:/opt/phorge/phorge/src/applications/policy/controller/PhabricatorPolicyEditController.php:ro
+    restart: unless-stopped
+    depends_on:
+      phorge-migrate:
+        condition: service_completed_successfully
+      gorge-taskqueue:
+        condition: service_started
+      gorge-worker:
+        condition: service_healthy
+      phorge:
+        condition: service_healthy
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_PORT: '3306'
+      MYSQL_USER: phorge
+      MYSQL_PASS: ${MYSQL_PASSWORD:?Set MYSQL_PASSWORD}
+      PHORGE_BASE_URI: ${PHORGE_BASE_URI:?Set PHORGE_BASE_URI}
+      PHORGE_TIMEZONE: Asia/Shanghai
+      PHORGE_WAIT_DB: ${PHORGE_WAIT_DB:-1}
+      PHORGE_DB_NAMESPACE: ${PHORGE_DB_NAMESPACE:-phabricator}
+      PHORGE_GORGE_POLICY: required
+      PHORGE_CONTROL_PLANE: deployment
+      PHORGE_GORGE_STARTUP_TIMEOUT: '180'
+      GORGE_WORKER_URI: ${GORGE_WORKER_URI:-http://gorge-worker:8170}
+      GORGE_WORKER_TOKEN: ${GORGE_WORKER_TOKEN:?Set GORGE_WORKER_TOKEN}
+      GORGE_MAIL_DELIVERY_MODE: ${GORGE_MAIL_DELIVERY_MODE:-legacy}
+      PHORGE_CONTAINER_ROLE: daemon
+    command:
+    - /usr/local/bin/phd-foreground
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - su -s /bin/sh www-data -c '/opt/phorge/phorge/bin/phd status' >/dev/null 2>&1
+      interval: 15s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
+    mem_limit: 256m
+    cpus: 1.0
+    pids_limit: 128
+    security_opt:
+    - no-new-privileges:true
+    pull_policy: never
+    networks:
+      core: {}
+      rpc: {}
+      notify_admin: {}
+volumes:
+  phorge-db: {}
+  phorge-conf: {}
+  phorge-repo: {}
+  phorge-files: {}
+networks:
+  core:
+    internal: true
+  rpc:
+    internal: true
+  web:
+    internal: true
+  core_egress: {}
+  notify_admin:
+    internal: true
+    ipam:
+      config:
+      - subnet: 172.29.241.0/24
+  notify_client:
+    internal: true
+    ipam:
+      config:
+      - subnet: 172.29.242.0/24

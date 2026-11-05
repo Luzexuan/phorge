@@ -1,0 +1,122 @@
+services:
+  maintenance:
+    image: team-management/maintenance:e5141c7-v1
+    pull_policy: never
+    restart: unless-stopped
+    user: 10001:10001
+    group_add:
+    - '33'
+    read_only: true
+    cap_drop:
+    - ALL
+    security_opt:
+    - no-new-privileges:true
+    tmpfs:
+    - /tmp:rw,nosuid,nodev,noexec,size=64m
+    mem_limit: 256m
+    cpus: 0.75
+    pids_limit: 96
+    stop_signal: SIGTERM
+    stop_grace_period: 45s
+    environment:
+      MAINTENANCE_ROOT: /workspace
+      MAINTENANCE_BIND_HOST: 172.30.20.3
+      MAINTENANCE_CLIENT_IP: 172.30.20.2
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTHONUNBUFFERED: '1'
+    volumes:
+    - ./config/maintenance/service.py:/workspace/config/maintenance/service.py:ro
+    - ./config/maintenance/native.php:/workspace/config/maintenance/native.php:ro
+    - ./config/maintenance/keys/service.key:/run/secrets/maintenance.key:ro
+    - ./scripts:/workspace/scripts:ro
+    - ./config/registration/server.py:/workspace/config/registration/server.py:ro
+    - ./config/registration/credential_hashes.py:/workspace/config/registration/credential_hashes.py:ro
+    - ./config/warden:/workspace/config/warden
+    - ./config/passwords:/workspace/config/passwords
+    - ./state/registration:/workspace/state/registration
+    - ./state/maintenance:/workspace/state/maintenance
+    - phorge-conf:/opt/phorge/phorge/conf/local:ro
+    - ./config/phorge/extensions/TeamEntrySessionGuard.php:/opt/phorge/phorge/src/extensions/TeamEntrySessionGuard.php:ro
+    - ./config/phorge/extensions/TeamPrivateDefaults.php:/opt/phorge/phorge/src/extensions/TeamPrivateDefaults.php:ro
+    - ./config/phorge/overrides/PhabricatorFileQuery.php:/opt/phorge/phorge/src/applications/files/query/PhabricatorFileQuery.php:ro
+    - ./config/phorge/overrides/PhabricatorProject.php:/opt/phorge/phorge/src/applications/project/storage/PhabricatorProject.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectController.php:/opt/phorge/phorge/src/applications/project/controller/PhabricatorProjectController.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectEditController.php:/opt/phorge/phorge/src/applications/project/controller/PhabricatorProjectEditController.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectEditEngine.php:/opt/phorge/phorge/src/applications/project/engine/PhabricatorProjectEditEngine.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectListController.php:/opt/phorge/phorge/src/applications/project/controller/PhabricatorProjectListController.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectListView.php:/opt/phorge/phorge/src/applications/project/view/PhabricatorProjectListView.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectMemberListView.php:/opt/phorge/phorge/src/applications/project/view/PhabricatorProjectMemberListView.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectMembersAddController.php:/opt/phorge/phorge/src/applications/project/controller/PhabricatorProjectMembersAddController.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectMembersRemoveController.php:/opt/phorge/phorge/src/applications/project/controller/PhabricatorProjectMembersRemoveController.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectMembersViewController.php:/opt/phorge/phorge/src/applications/project/controller/PhabricatorProjectMembersViewController.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectSearchEngine.php:/opt/phorge/phorge/src/applications/project/query/PhabricatorProjectSearchEngine.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectSubprojectWarningController.php:/opt/phorge/phorge/src/applications/project/controller/PhabricatorProjectSubprojectWarningController.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectSubprojectsController.php:/opt/phorge/phorge/src/applications/project/controller/PhabricatorProjectSubprojectsController.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectTransactionEditor.php:/opt/phorge/phorge/src/applications/project/editor/PhabricatorProjectTransactionEditor.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectUpdateController.php:/opt/phorge/phorge/src/applications/project/controller/PhabricatorProjectUpdateController.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectUserListView.php:/opt/phorge/phorge/src/applications/project/view/PhabricatorProjectUserListView.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectsMembershipIndexEngineExtension.php:/opt/phorge/phorge/src/applications/project/engineextension/PhabricatorProjectsMembershipIndexEngineExtension.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectApplication.php:/opt/phorge/phorge/src/applications/project/application/PhabricatorProjectApplication.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectProfileController.php:/opt/phorge/phorge/src/applications/project/controller/PhabricatorProjectProfileController.php:ro
+    - ./config/phorge/overrides/PhabricatorPeopleProfileController.php:/opt/phorge/phorge/src/applications/people/controller/PhabricatorPeopleProfileController.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectProfileMenuEngine.php:/opt/phorge/phorge/src/applications/project/engine/PhabricatorProjectProfileMenuEngine.php:ro
+    - ./config/phorge/extensions/TeamProjectProgress.php:/opt/phorge/phorge/src/extensions/TeamProjectProgress.php:ro
+    - ./config/phorge/extensions/TeamProjectProgressController.php:/opt/phorge/phorge/src/extensions/TeamProjectProgressController.php:ro
+    - ./config/phorge/extensions/TeamProjectProgressMenuItem.php:/opt/phorge/phorge/src/extensions/TeamProjectProgressMenuItem.php:ro
+    - ./config/phorge/extensions/TeamOrganization.php:/opt/phorge/phorge/src/extensions/TeamOrganization.php:ro
+    - ./config/phorge/extensions/TeamOrganizationPolicy.php:/opt/phorge/phorge/src/extensions/TeamOrganizationPolicy.php:ro
+    - ./config/phorge/extensions/TeamOrganizationApplication.php:/opt/phorge/phorge/src/extensions/TeamOrganizationApplication.php:ro
+    - ./config/phorge/extensions/TeamMaintenanceApplication.php:/opt/phorge/phorge/src/extensions/TeamMaintenanceApplication.php:ro
+    - ./config/phorge/organization/20261027.organization.sql:/opt/phorge/phorge/resources/sql/team-organization/20261027.organization.sql:ro
+    - ./config/phorge/overrides/AphrontFormPolicyControl.php:/opt/phorge/phorge/src/view/form/control/AphrontFormPolicyControl.php:ro
+    - ./config/phorge/extensions/TeamProjectMembership.php:/opt/phorge/phorge/src/extensions/TeamProjectMembership.php:ro
+    - ./config/phorge/extensions/TeamProjectMemberImport.php:/opt/phorge/phorge/src/extensions/TeamProjectMemberImport.php:ro
+    - ./config/phorge/extensions/TeamProjectTeamPolicy.php:/opt/phorge/phorge/src/extensions/TeamProjectTeamPolicy.php:ro
+    - ./config/phorge/overrides/PhabricatorProjectBoardViewController.php:/opt/phorge/phorge/src/applications/project/controller/PhabricatorProjectBoardViewController.php:ro
+    - ./config/phorge/overrides/ManiphestEditEngine.php:/opt/phorge/phorge/src/applications/maniphest/editor/ManiphestEditEngine.php:ro
+    - ./config/phorge/overrides/PhabricatorManiphestConfigOptions.php:/opt/phorge/phorge/src/applications/maniphest/config/PhabricatorManiphestConfigOptions.php:ro
+    - ./config/phorge/overrides/ProjectBoardTaskCard.php:/opt/phorge/phorge/src/applications/project/view/ProjectBoardTaskCard.php:ro
+    - ./config/phorge/overrides/PhabricatorPolicyRulesView.php:/opt/phorge/phorge/src/applications/policy/view/PhabricatorPolicyRulesView.php:ro
+    - ./config/phorge/overrides/PhabricatorChineseTranslation.php:/opt/phorge/phorge/src/infrastructure/internationalization/translation/PhabricatorChineseTranslation.php:ro
+    - ./config/phorge/overrides/PhabricatorPolicyEditController.php:/opt/phorge/phorge/src/applications/policy/controller/PhabricatorPolicyEditController.php:ro
+    networks:
+      maintenance:
+        ipv4_address: 172.30.20.3
+      core: {}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    healthcheck:
+      test:
+      - CMD
+      - python3
+      - -c
+      - import urllib.request; urllib.request.urlopen('http://172.30.20.3:8086/healthz',timeout=3)
+      interval: 15s
+      timeout: 5s
+      retries: 4
+      start_period: 15s
+    logging:
+      driver: json-file
+      options:
+        max-size: 5m
+        max-file: '2'
+  phorge:
+    volumes:
+    - ./config/phorge/extensions/TeamPrivateDefaults.php:/opt/phorge/phorge/src/extensions/TeamPrivateDefaults.php:ro
+    - ./config/maintenance/keys/php.key:/run/secrets/team-maintenance.key:ro
+    networks:
+      maintenance:
+        ipv4_address: 172.30.20.2
+  phorge-daemon:
+    volumes:
+    - ./config/phorge/extensions/TeamPrivateDefaults.php:/opt/phorge/phorge/src/extensions/TeamPrivateDefaults.php:ro
+  phorge-migrate:
+    volumes:
+    - ./config/phorge/extensions/TeamPrivateDefaults.php:/opt/phorge/phorge/src/extensions/TeamPrivateDefaults.php:ro
+networks:
+  maintenance:
+    internal: true
+    ipam:
+      config:
+      - subnet: 172.30.20.0/24

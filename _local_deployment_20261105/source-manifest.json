@@ -1,0 +1,1390 @@
+{
+  "purpose": "Source-only backup before deploying upstream main",
+  "upstreamTarget": "965a72308747346c0de539e78c0a79a0ebaa47d0",
+  "localIntegration": "9af2f7889576ee53179917906fb88970c2ee43b2",
+  "effectiveRuntimeFiles": 43,
+  "knownLiveSecretsScanned": 19,
+  "copiedFiles": [
+    {
+      "source": "config/phorge/organization/20261027.organization.sql",
+      "savedPath": "resources/sql/team-organization/20261027.organization.sql",
+      "sha256": "b0228db669a85eb3a9468cb57c21ef8ae5a655009da2ae2d33f25c0ce8eb15e3"
+    },
+    {
+      "source": "config/phorge/overrides/PhabricatorFileQuery.php",
+      "savedPath": "src/applications/files/query/PhabricatorFileQuery.php",
+      "sha256": "155c13c7a6472979a60ed5fa41ac5d0c663e69e96cffed6e351a59becb89a04d"
+    },
+    {
+      "source": "config/phorge/overrides/PhabricatorManiphestConfigOptions.php",
+      "savedPath": "src/applications/maniphest/config/PhabricatorManiphestConfigOptions.php",
+      "sha256": "feabd5c69c411f397f23379f1a096b8cee42a221936127b50d4c9ea65e6ad9a2"
+    },
+    {
+      "source": "config/phorge/overrides/ManiphestEditEngine.php",
+      "savedPath": "src/applications/maniphest/editor/ManiphestEditEngine.php",
+      "sha256": "2e763451c05e0dffef41d59c58766d2d549589fb278107d85ffa7ae014e93dd9"
+    },
+    {
+      "source": "config/phorge/overrides/PhabricatorPeopleProfileController.php",
+      "savedPath": "src/applications/people/controller/PhabricatorPeopleProfileController.php",
+      "sha256": "5a4708c199e422c72536fe32375e6f2d74e548f393043fc194a065d80daeb890"
+    },
+    {
+      "source": "config/phorge/overrides/PhabricatorPolicyEditController.php",
+      "savedPath": "src/applications/policy/controller/PhabricatorPolicyEditController.php",
+      "sha256": "09065126143d53c985aee2549634047b0f0fffc61bef0955267b14a69bc60ffa"
+    },
+    {
+      "source": "config/phorge/overrides/PhabricatorPolicyRulesView.php",
+      "savedPath": "src/applications/policy/view/PhabricatorPolicyRulesView.php",
+      "sha256": "2df5ed1496ba70124921f82462d7064eb1a57cb169b25c2ab5570e21e47e4b9f"
+    },
+    {
+      "source": "config/phorge/overrides/PhabricatorProjectApplication.php",
+      "savedPath": "src/applications/project/application/PhabricatorProjectApplication.php",
+      "sha256": "4d6139de01a58805a5c64d1ac0276336613a10f7be6726949a781ae54403e5c7"
+    },
+    {
+      "source": "config/phorge/overrides/PhabricatorProjectBoardViewController.php",
+      "savedPath": "src/applications/project/controller/PhabricatorProjectBoardViewController.php",
+      "sha256": "bc29c0c2b75b16b404460c5a75277ea3a18f532e5080c7bb39e5b32695e0bce9"
+    },
+    {
+      "source": "config/phorge/overrides/PhabricatorProjectController.php",
+      "savedPath": "src/applications/project/controller/PhabricatorProjectController.php",
+      "sha256": "e2ad9029a070b26cc636bc919dba195072c4e14621367942d83f4f61faf819d3"
+    },
+    {
+      "source": "config/phorge/overrides/PhabricatorProjectEditController.php",
+      "savedPath": "src/applications/project/controller/PhabricatorProjectEditController.php",
+      "sha256": "11845ce029b93e4b5e35740af7c0169c0178c22e26cd4e1dff8a7710194e4c27"
+    },
+    {
+      "source": "config/phorge/overrides/PhabricatorProjectListController.php",
+      "savedPath": "src/applications/project/controller/PhabricatorProjectListController.php",
+      "sha256": "af5a11f938a3b3fe1a744be24bc526d6a124e08199d294cb0a8a9ac4a568e7e5"
+    },
+    {
+      "source": "config/phorge/overrides/PhabricatorProjectMembersAddController.php",
+      "savedPath": "src/applications/project/controller/PhabricatorProjectMembersAddController.php",
+      "sha256": "8ddaaedc2cfa791e0e20c6449980f9b893461dd499cd8cea54b2fe04eb6ac297"
+    },
+    {
+      "source": "config/phorge/overrides/PhabricatorProjectMembersRemoveController.php",
+      "savedPath": "src/applications/project/controller/PhabricatorProjectMembersRemoveController.php",
+      "sha256": "f8883d1b30c783861d108859465c52e4ec817e79342adda0b8efb55d5a2f123b"
+    },
+    {
+      "source": "config/phorge/overrides/PhabricatorProjectMembersViewController.php",
+      "savedPath": "src/applications/project/controller/PhabricatorProjectMembersViewController.php",
+      "sha256": "ffa819dc613cb17496a954283e8d37415aa2bf02ed18a79b30dd8029041846ee"
+    },
+    {
+      "source": "config/phorge/overrides/PhabricatorProjectProfileController.php",
+      "savedPath": "src/applications/project/controller/PhabricatorProjectProfileController.php",
+      "sha256": "eea2d630b3feeb317e8cdb3b74f833195df78be3462a43e8bbd0e4dfd434534c"
+    },
+    {
+      "source": "config/phorge/overrides/PhabricatorProjectSubprojectWarningController.php",
+      "savedPath": "src/applications/project/controller/PhabricatorProjectSubprojectWarningController.php",
+      "sha256": "1cd1e7845c95f8e7180c0445cca1fface72ac9c419133e14d6e9183bd637d31a"
+    },
+    {
+      "source": "config/phorge/overrides/PhabricatorProjectSubprojectsController.php",
+      "savedPath": "src/applications/project/controller/PhabricatorProjectSubprojectsController.php",
+      "sha256": "f2d4733cb12ec37560346964feb2dc58ec11b8042cfe2b455f0e999d4eb9648d"
+    },
+    {
+      "source": "config/phorge/overrides/PhabricatorProjectUpdateController.php",
+      "savedPath": "src/applications/project/controller/PhabricatorProjectUpdateController.php",
+      "sha256": "a49b6f3fd08b5d698ecca9a0d16314c25241a4e11f5713d009769e46deecabc2"
+    },
+    {
+      "source": "config/phorge/overrides/PhabricatorProjectTransactionEditor.php",
+      "savedPath": "src/applications/project/editor/PhabricatorProjectTransactionEditor.php",
+      "sha256": "772dea298c410befd3654c2f5db5afc4db2fc7563000917fd61f1b6f7d326d36"
+    },
+    {
+      "source": "config/phorge/overrides/PhabricatorProjectEditEngine.php",
+      "savedPath": "src/applications/project/engine/PhabricatorProjectEditEngine.php",
+      "sha256": "b66f4bdbd0042a6a3d131e2a7812cdb9e66d3e4f1dcd1480b24a99f5e6d55bee"
+    },
+    {
+      "source": "config/phorge/overrides/PhabricatorProjectProfileMenuEngine.php",
+      "savedPath": "src/applications/project/engine/PhabricatorProjectProfileMenuEngine.php",
+      "sha256": "b7bea2b73aabcd913a76d7082a47bdd9bbdafd7e0bd7d5febc1bb73c56cc3460"
+    },
+    {
+      "source": "config/phorge/overrides/PhabricatorProjectsMembershipIndexEngineExtension.php",
+      "savedPath": "src/applications/project/engineextension/PhabricatorProjectsMembershipIndexEngineExtension.php",
+      "sha256": "20011cab4c144ed4c051b651e3710c529620dbd7c1fa600b7519b1e59dff1be4"
+    },
+    {
+      "source": "config/phorge/overrides/PhabricatorProjectSearchEngine.php",
+      "savedPath": "src/applications/project/query/PhabricatorProjectSearchEngine.php",
+      "sha256": "8c29f0c59a7b95fc64f71a62e880e4fa4b6f8741be7e7d5a5f9c6dcc05e58f1e"
+    },
+    {
+      "source": "config/phorge/overrides/PhabricatorProject.php",
+      "savedPath": "src/applications/project/storage/PhabricatorProject.php",
+      "sha256": "adf6c63b8afadb816f3dc7fda88ac6c06d1954f8a117886c1e1a82ae293ce679"
+    },
+    {
+      "source": "config/phorge/overrides/PhabricatorProjectListView.php",
+      "savedPath": "src/applications/project/view/PhabricatorProjectListView.php",
+      "sha256": "cf939212c762b09f46d3965240099d64a04ab6f5fbe91ed4a61f785b8082821c"
+    },
+    {
+      "source": "config/phorge/overrides/PhabricatorProjectMemberListView.php",
+      "savedPath": "src/applications/project/view/PhabricatorProjectMemberListView.php",
+      "sha256": "c982cf92ccc7925f1e970bd254d46c2ea69c9f2fd1338a19d4abc53c6fa9590a"
+    },
+    {
+      "source": "config/phorge/overrides/PhabricatorProjectUserListView.php",
+      "savedPath": "src/applications/project/view/PhabricatorProjectUserListView.php",
+      "sha256": "8a0c9607e0ffea5f2d425d4c1f3a07c295a23a53723fb4f923b4398cef16eca3"
+    },
+    {
+      "source": "config/phorge/overrides/ProjectBoardTaskCard.php",
+      "savedPath": "src/applications/project/view/ProjectBoardTaskCard.php",
+      "sha256": "e035bb0aa4b7d66f9075f32cf8617b09fa527ca4f113c888a458a48024af720e"
+    },
+    {
+      "source": "config/phorge/extensions/TeamEntrySessionGuard.php",
+      "savedPath": "src/extensions/TeamEntrySessionGuard.php",
+      "sha256": "7c10a0614eb6dc2d5102db9dc9944f5535cd4b3971bd2f0c27446904de2e2606"
+    },
+    {
+      "source": "config/phorge/extensions/TeamMaintenanceApplication.php",
+      "savedPath": "src/extensions/TeamMaintenanceApplication.php",
+      "sha256": "232f8c87565d9468f8f37b1d760770df01369846b8888f963c8884ae4aec6f11"
+    },
+    {
+      "source": "config/phorge/extensions/TeamOrganization.php",
+      "savedPath": "src/extensions/TeamOrganization.php",
+      "sha256": "9edad92c9111706d66412f294ce93e4f646a58907dd0e625406c0b1a39b1ad6f"
+    },
+    {
+      "source": "config/phorge/extensions/TeamOrganizationApplication.php",
+      "savedPath": "src/extensions/TeamOrganizationApplication.php",
+      "sha256": "a030a8b22a4135d6506591f12b2aa3ed0c804d6a2393716bebb4693293818abd"
+    },
+    {
+      "source": "config/phorge/extensions/TeamOrganizationPolicy.php",
+      "savedPath": "src/extensions/TeamOrganizationPolicy.php",
+      "sha256": "1d514f4e686418afe85628aad49efdbf189646cb4436a74179ce65fa61db7d05"
+    },
+    {
+      "source": "config/phorge/extensions/TeamPrivateDefaults.php",
+      "savedPath": "src/extensions/TeamPrivateDefaults.php",
+      "sha256": "c8c3e5315f80b7ae25da77dbe2156514f243b7a741e8f5333973720818d7030b"
+    },
+    {
+      "source": "config/phorge/extensions/TeamProjectMemberImport.php",
+      "savedPath": "src/extensions/TeamProjectMemberImport.php",
+      "sha256": "e6c671adbafa69a028e61ec0d5b49a0647e725418bae63863112b9bd5a1b1397"
+    },
+    {
+      "source": "config/phorge/extensions/TeamProjectMembership.php",
+      "savedPath": "src/extensions/TeamProjectMembership.php",
+      "sha256": "44a9ae3962999d765f1ae5c0098b535a8a9b3df27a351be0d555b304212b7ec5"
+    },
+    {
+      "source": "config/phorge/extensions/TeamProjectProgress.php",
+      "savedPath": "src/extensions/TeamProjectProgress.php",
+      "sha256": "a6b658d3ffc5308794551053c08d200b8f0097608f0634486f2b1d510afa5b16"
+    },
+    {
+      "source": "config/phorge/extensions/TeamProjectProgressController.php",
+      "savedPath": "src/extensions/TeamProjectProgressController.php",
+      "sha256": "5d89f8da9e1b6cca7bf7fd5300d6f10160af60d9d53a6634faf4efc6d7c8be72"
+    },
+    {
+      "source": "config/phorge/extensions/TeamProjectProgressMenuItem.php",
+      "savedPath": "src/extensions/TeamProjectProgressMenuItem.php",
+      "sha256": "18df94d9ab7b6ef2241788a5daf4491d36a2c9399912e8263bec50cca9031c78"
+    },
+    {
+      "source": "config/phorge/extensions/TeamProjectTeamPolicy.php",
+      "savedPath": "src/extensions/TeamProjectTeamPolicy.php",
+      "sha256": "a1aa6a8073341b35ac4b5b89799627e7f764ae35128bcdde2da2ef66615b1274"
+    },
+    {
+      "source": "config/phorge/overrides/PhabricatorChineseTranslation.php",
+      "savedPath": "src/infrastructure/internationalization/translation/PhabricatorChineseTranslation.php",
+      "sha256": "d85c3455a95bbea3d1d45b92fab1a87fe83355461c2779663ec533d363b2b4f6"
+    },
+    {
+      "source": "config/phorge/overrides/AphrontFormPolicyControl.php",
+      "savedPath": "src/view/form/control/AphrontFormPolicyControl.php",
+      "sha256": "35feb3652c4a8c1d1930c0b4b4b9c3481088cc177d470f9c90591cdd1833c5bf"
+    },
+    {
+      "source": "compose.core.yaml",
+      "savedPath": "_local_deployment_20261105/compose.core.yaml",
+      "sha256": "6b8bec8264936bc0cf38ce50248743ea03a1ab2ae9519df0c6cfa4c8db4bf39a"
+    },
+    {
+      "source": "compose.dingtalk.yaml",
+      "savedPath": "_local_deployment_20261105/compose.dingtalk.yaml",
+      "sha256": "c9251fbe050aaee6c95dc93213e8375bb020232b5563539153a0688ebf69966e"
+    },
+    {
+      "source": "compose.gateway.yaml",
+      "savedPath": "_local_deployment_20261105/compose.gateway.yaml",
+      "sha256": "e18a8265555f0cd36029936a8de53235bebec879c8d02f3f285a79522b271b4c"
+    },
+    {
+      "source": "compose.identity.yaml",
+      "savedPath": "_local_deployment_20261105/compose.identity.yaml",
+      "sha256": "d19c7e867fe9044cf1a2402cab88bacec4c539d18030f914b3396783f1959f22"
+    },
+    {
+      "source": "compose.maintenance.yaml",
+      "savedPath": "_local_deployment_20261105/compose.maintenance.yaml",
+      "sha256": "aa2859352a40652fc8b187802ad7e1656ba43ce9301e2abfd81ccaa45c030e95"
+    },
+    {
+      "source": "compose.public.yaml",
+      "savedPath": "_local_deployment_20261105/compose.public.yaml",
+      "sha256": "d41bc0bca95c1157ba2f8fbee98ab91f9203a0e5aea60e8e9b224b1fe4a26dc2"
+    },
+    {
+      "source": "compose.registration.yaml",
+      "savedPath": "_local_deployment_20261105/compose.registration.yaml",
+      "sha256": "bfdecefde949dece0b05274fa128f7f344ca740ef1bc7d8dc083d83fdbafad27"
+    },
+    {
+      "source": "compose.testing.yaml",
+      "savedPath": "_local_deployment_20261105/compose.testing.yaml",
+      "sha256": "6d26fe56e75a3047e2d3ad8fe4627f16cd8a6545432b3930e0ad427104d438b7"
+    },
+    {
+      "source": "config/build/Gorge-builder.Dockerfile",
+      "savedPath": "_local_deployment_20261105/config/build/Gorge-builder.Dockerfile",
+      "sha256": "773ffc015dbe5016c6609d4c7dc5f0e0279f8332c6b5c372e699ac01042bff85"
+    },
+    {
+      "source": "config/build/Gorge.Dockerfile",
+      "savedPath": "_local_deployment_20261105/config/build/Gorge.Dockerfile",
+      "sha256": "307026bc08daaaf921a980ca973f70acb0ee821065cb3a0a755185cb119ed949"
+    },
+    {
+      "source": "config/build/Phorge.Dockerfile",
+      "savedPath": "_local_deployment_20261105/config/build/Phorge.Dockerfile",
+      "sha256": "4f60a2216b0333fe9d51ead57fd4c2bdc010b7bbed8cf4492f9a7960efa5e981"
+    },
+    {
+      "source": "config/maintenance/native.php",
+      "savedPath": "_local_deployment_20261105/config/maintenance/native.php",
+      "sha256": "fa5d63e2c63f03f86612a93f90434b00b186bdff00ff5659ce985d63dcdcd993"
+    },
+    {
+      "source": "config/maintenance/service.py",
+      "savedPath": "_local_deployment_20261105/config/maintenance/service.py",
+      "sha256": "16b6867712031c5bda22b7b8a5b60b1e4953d732bccdac816f61024b0c406e4a"
+    },
+    {
+      "source": "config/phorge/extensions/TeamEntrySessionGuard.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/extensions/TeamEntrySessionGuard.php",
+      "sha256": "7c10a0614eb6dc2d5102db9dc9944f5535cd4b3971bd2f0c27446904de2e2606"
+    },
+    {
+      "source": "config/phorge/extensions/TeamMaintenanceApplication.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/extensions/TeamMaintenanceApplication.php",
+      "sha256": "232f8c87565d9468f8f37b1d760770df01369846b8888f963c8884ae4aec6f11"
+    },
+    {
+      "source": "config/phorge/extensions/TeamOrganization.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/extensions/TeamOrganization.php",
+      "sha256": "9edad92c9111706d66412f294ce93e4f646a58907dd0e625406c0b1a39b1ad6f"
+    },
+    {
+      "source": "config/phorge/extensions/TeamOrganizationApplication.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/extensions/TeamOrganizationApplication.php",
+      "sha256": "a030a8b22a4135d6506591f12b2aa3ed0c804d6a2393716bebb4693293818abd"
+    },
+    {
+      "source": "config/phorge/extensions/TeamOrganizationPolicy.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/extensions/TeamOrganizationPolicy.php",
+      "sha256": "1d514f4e686418afe85628aad49efdbf189646cb4436a74179ce65fa61db7d05"
+    },
+    {
+      "source": "config/phorge/extensions/TeamPrivateDefaults.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/extensions/TeamPrivateDefaults.php",
+      "sha256": "c8c3e5315f80b7ae25da77dbe2156514f243b7a741e8f5333973720818d7030b"
+    },
+    {
+      "source": "config/phorge/extensions/TeamProjectMemberImport.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/extensions/TeamProjectMemberImport.php",
+      "sha256": "e6c671adbafa69a028e61ec0d5b49a0647e725418bae63863112b9bd5a1b1397"
+    },
+    {
+      "source": "config/phorge/extensions/TeamProjectMembership.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/extensions/TeamProjectMembership.php",
+      "sha256": "44a9ae3962999d765f1ae5c0098b535a8a9b3df27a351be0d555b304212b7ec5"
+    },
+    {
+      "source": "config/phorge/extensions/TeamProjectProgress.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/extensions/TeamProjectProgress.php",
+      "sha256": "a6b658d3ffc5308794551053c08d200b8f0097608f0634486f2b1d510afa5b16"
+    },
+    {
+      "source": "config/phorge/extensions/TeamProjectProgressController.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/extensions/TeamProjectProgressController.php",
+      "sha256": "5d89f8da9e1b6cca7bf7fd5300d6f10160af60d9d53a6634faf4efc6d7c8be72"
+    },
+    {
+      "source": "config/phorge/extensions/TeamProjectProgressMenuItem.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/extensions/TeamProjectProgressMenuItem.php",
+      "sha256": "18df94d9ab7b6ef2241788a5daf4491d36a2c9399912e8263bec50cca9031c78"
+    },
+    {
+      "source": "config/phorge/extensions/TeamProjectTeamPolicy.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/extensions/TeamProjectTeamPolicy.php",
+      "sha256": "a1aa6a8073341b35ac4b5b89799627e7f764ae35128bcdde2da2ef66615b1274"
+    },
+    {
+      "source": "config/phorge/organization/20261027.organization.sql",
+      "savedPath": "_local_deployment_20261105/config/phorge/organization/20261027.organization.sql",
+      "sha256": "b0228db669a85eb3a9468cb57c21ef8ae5a655009da2ae2d33f25c0ce8eb15e3"
+    },
+    {
+      "source": "config/phorge/organization-staging/20261027.organization.sql",
+      "savedPath": "_local_deployment_20261105/config/phorge/organization-staging/20261027.organization.sql",
+      "sha256": "b0228db669a85eb3a9468cb57c21ef8ae5a655009da2ae2d33f25c0ce8eb15e3"
+    },
+    {
+      "source": "config/phorge/organization-staging/TeamMaintenanceApplication.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/organization-staging/TeamMaintenanceApplication.php",
+      "sha256": "232f8c87565d9468f8f37b1d760770df01369846b8888f963c8884ae4aec6f11"
+    },
+    {
+      "source": "config/phorge/organization-staging/TeamOrganization.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/organization-staging/TeamOrganization.php",
+      "sha256": "9edad92c9111706d66412f294ce93e4f646a58907dd0e625406c0b1a39b1ad6f"
+    },
+    {
+      "source": "config/phorge/organization-staging/TeamOrganizationApplication.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/organization-staging/TeamOrganizationApplication.php",
+      "sha256": "a030a8b22a4135d6506591f12b2aa3ed0c804d6a2393716bebb4693293818abd"
+    },
+    {
+      "source": "config/phorge/organization-staging/TeamOrganizationPolicy.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/organization-staging/TeamOrganizationPolicy.php",
+      "sha256": "1d514f4e686418afe85628aad49efdbf189646cb4436a74179ce65fa61db7d05"
+    },
+    {
+      "source": "config/phorge/overrides/AphrontFormPolicyControl.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/overrides/AphrontFormPolicyControl.php",
+      "sha256": "35feb3652c4a8c1d1930c0b4b4b9c3481088cc177d470f9c90591cdd1833c5bf"
+    },
+    {
+      "source": "config/phorge/overrides/ManiphestEditEngine.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/overrides/ManiphestEditEngine.php",
+      "sha256": "2e763451c05e0dffef41d59c58766d2d549589fb278107d85ffa7ae014e93dd9"
+    },
+    {
+      "source": "config/phorge/overrides/PhabricatorChineseTranslation.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/overrides/PhabricatorChineseTranslation.php",
+      "sha256": "d85c3455a95bbea3d1d45b92fab1a87fe83355461c2779663ec533d363b2b4f6"
+    },
+    {
+      "source": "config/phorge/overrides/PhabricatorFileQuery.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/overrides/PhabricatorFileQuery.php",
+      "sha256": "155c13c7a6472979a60ed5fa41ac5d0c663e69e96cffed6e351a59becb89a04d"
+    },
+    {
+      "source": "config/phorge/overrides/PhabricatorManiphestConfigOptions.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/overrides/PhabricatorManiphestConfigOptions.php",
+      "sha256": "feabd5c69c411f397f23379f1a096b8cee42a221936127b50d4c9ea65e6ad9a2"
+    },
+    {
+      "source": "config/phorge/overrides/PhabricatorPeopleProfileController.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/overrides/PhabricatorPeopleProfileController.php",
+      "sha256": "5a4708c199e422c72536fe32375e6f2d74e548f393043fc194a065d80daeb890"
+    },
+    {
+      "source": "config/phorge/overrides/PhabricatorPolicyEditController.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/overrides/PhabricatorPolicyEditController.php",
+      "sha256": "09065126143d53c985aee2549634047b0f0fffc61bef0955267b14a69bc60ffa"
+    },
+    {
+      "source": "config/phorge/overrides/PhabricatorPolicyRulesView.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/overrides/PhabricatorPolicyRulesView.php",
+      "sha256": "2df5ed1496ba70124921f82462d7064eb1a57cb169b25c2ab5570e21e47e4b9f"
+    },
+    {
+      "source": "config/phorge/overrides/PhabricatorProject.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/overrides/PhabricatorProject.php",
+      "sha256": "adf6c63b8afadb816f3dc7fda88ac6c06d1954f8a117886c1e1a82ae293ce679"
+    },
+    {
+      "source": "config/phorge/overrides/PhabricatorProjectApplication.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/overrides/PhabricatorProjectApplication.php",
+      "sha256": "4d6139de01a58805a5c64d1ac0276336613a10f7be6726949a781ae54403e5c7"
+    },
+    {
+      "source": "config/phorge/overrides/PhabricatorProjectBoardViewController.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/overrides/PhabricatorProjectBoardViewController.php",
+      "sha256": "bc29c0c2b75b16b404460c5a75277ea3a18f532e5080c7bb39e5b32695e0bce9"
+    },
+    {
+      "source": "config/phorge/overrides/PhabricatorProjectController.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/overrides/PhabricatorProjectController.php",
+      "sha256": "e2ad9029a070b26cc636bc919dba195072c4e14621367942d83f4f61faf819d3"
+    },
+    {
+      "source": "config/phorge/overrides/PhabricatorProjectEditController.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/overrides/PhabricatorProjectEditController.php",
+      "sha256": "11845ce029b93e4b5e35740af7c0169c0178c22e26cd4e1dff8a7710194e4c27"
+    },
+    {
+      "source": "config/phorge/overrides/PhabricatorProjectEditEngine.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/overrides/PhabricatorProjectEditEngine.php",
+      "sha256": "b66f4bdbd0042a6a3d131e2a7812cdb9e66d3e4f1dcd1480b24a99f5e6d55bee"
+    },
+    {
+      "source": "config/phorge/overrides/PhabricatorProjectListController.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/overrides/PhabricatorProjectListController.php",
+      "sha256": "af5a11f938a3b3fe1a744be24bc526d6a124e08199d294cb0a8a9ac4a568e7e5"
+    },
+    {
+      "source": "config/phorge/overrides/PhabricatorProjectListView.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/overrides/PhabricatorProjectListView.php",
+      "sha256": "cf939212c762b09f46d3965240099d64a04ab6f5fbe91ed4a61f785b8082821c"
+    },
+    {
+      "source": "config/phorge/overrides/PhabricatorProjectMemberListView.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/overrides/PhabricatorProjectMemberListView.php",
+      "sha256": "c982cf92ccc7925f1e970bd254d46c2ea69c9f2fd1338a19d4abc53c6fa9590a"
+    },
+    {
+      "source": "config/phorge/overrides/PhabricatorProjectMembersAddController.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/overrides/PhabricatorProjectMembersAddController.php",
+      "sha256": "8ddaaedc2cfa791e0e20c6449980f9b893461dd499cd8cea54b2fe04eb6ac297"
+    },
+    {
+      "source": "config/phorge/overrides/PhabricatorProjectMembersRemoveController.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/overrides/PhabricatorProjectMembersRemoveController.php",
+      "sha256": "f8883d1b30c783861d108859465c52e4ec817e79342adda0b8efb55d5a2f123b"
+    },
+    {
+      "source": "config/phorge/overrides/PhabricatorProjectMembersViewController.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/overrides/PhabricatorProjectMembersViewController.php",
+      "sha256": "ffa819dc613cb17496a954283e8d37415aa2bf02ed18a79b30dd8029041846ee"
+    },
+    {
+      "source": "config/phorge/overrides/PhabricatorProjectProfileController.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/overrides/PhabricatorProjectProfileController.php",
+      "sha256": "eea2d630b3feeb317e8cdb3b74f833195df78be3462a43e8bbd0e4dfd434534c"
+    },
+    {
+      "source": "config/phorge/overrides/PhabricatorProjectProfileMenuEngine.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/overrides/PhabricatorProjectProfileMenuEngine.php",
+      "sha256": "b7bea2b73aabcd913a76d7082a47bdd9bbdafd7e0bd7d5febc1bb73c56cc3460"
+    },
+    {
+      "source": "config/phorge/overrides/PhabricatorProjectSearchEngine.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/overrides/PhabricatorProjectSearchEngine.php",
+      "sha256": "8c29f0c59a7b95fc64f71a62e880e4fa4b6f8741be7e7d5a5f9c6dcc05e58f1e"
+    },
+    {
+      "source": "config/phorge/overrides/PhabricatorProjectSubprojectWarningController.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/overrides/PhabricatorProjectSubprojectWarningController.php",
+      "sha256": "1cd1e7845c95f8e7180c0445cca1fface72ac9c419133e14d6e9183bd637d31a"
+    },
+    {
+      "source": "config/phorge/overrides/PhabricatorProjectSubprojectsController.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/overrides/PhabricatorProjectSubprojectsController.php",
+      "sha256": "f2d4733cb12ec37560346964feb2dc58ec11b8042cfe2b455f0e999d4eb9648d"
+    },
+    {
+      "source": "config/phorge/overrides/PhabricatorProjectTransactionEditor.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/overrides/PhabricatorProjectTransactionEditor.php",
+      "sha256": "772dea298c410befd3654c2f5db5afc4db2fc7563000917fd61f1b6f7d326d36"
+    },
+    {
+      "source": "config/phorge/overrides/PhabricatorProjectUpdateController.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/overrides/PhabricatorProjectUpdateController.php",
+      "sha256": "a49b6f3fd08b5d698ecca9a0d16314c25241a4e11f5713d009769e46deecabc2"
+    },
+    {
+      "source": "config/phorge/overrides/PhabricatorProjectUserListView.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/overrides/PhabricatorProjectUserListView.php",
+      "sha256": "8a0c9607e0ffea5f2d425d4c1f3a07c295a23a53723fb4f923b4398cef16eca3"
+    },
+    {
+      "source": "config/phorge/overrides/PhabricatorProjectsMembershipIndexEngineExtension.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/overrides/PhabricatorProjectsMembershipIndexEngineExtension.php",
+      "sha256": "20011cab4c144ed4c051b651e3710c529620dbd7c1fa600b7519b1e59dff1be4"
+    },
+    {
+      "source": "config/phorge/overrides/ProjectBoardTaskCard.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/overrides/ProjectBoardTaskCard.php",
+      "sha256": "e035bb0aa4b7d66f9075f32cf8617b09fa527ca4f113c888a458a48024af720e"
+    },
+    {
+      "source": "config/phorge/overrides/README.txt",
+      "savedPath": "_local_deployment_20261105/config/phorge/overrides/README.txt",
+      "sha256": "95b2a0792976c717cb03848471a30d5a0f05b50dacf29ef728d5242bce8f9298"
+    },
+    {
+      "source": "config/phorge/overrides/file-profile-ancestry.patch",
+      "savedPath": "_local_deployment_20261105/config/phorge/overrides/file-profile-ancestry.patch",
+      "sha256": "dcc5f48eb6063b30f2172ce29e183aff304530888d5d9cabbb05849ed31e48da"
+    },
+    {
+      "source": "config/phorge/overrides/people-profile-denial.patch",
+      "savedPath": "_local_deployment_20261105/config/phorge/overrides/people-profile-denial.patch",
+      "sha256": "f95cd63b27b6a76090968e47b282df928ec096fbc67765d37d7858c67ae1894a"
+    },
+    {
+      "source": "config/phorge/overrides/policy-language.patch",
+      "savedPath": "_local_deployment_20261105/config/phorge/overrides/policy-language.patch",
+      "sha256": "99dda3deee2b9e242c2ba7f7aa5cc2783e62da016b7478d168dd5db7201d342b"
+    },
+    {
+      "source": "config/phorge/overrides/policy-options.patch",
+      "savedPath": "_local_deployment_20261105/config/phorge/overrides/policy-options.patch",
+      "sha256": "3c283f3119ecca185c6de2665f6a6c9bae4f6b87ed1a875f93b166039cabf700"
+    },
+    {
+      "source": "config/phorge/overrides/project-hierarchy-browser.patch",
+      "savedPath": "_local_deployment_20261105/config/phorge/overrides/project-hierarchy-browser.patch",
+      "sha256": "9d1e62cce4718bd0ee8eec7ff8929068ea530db00a49b5cecc5576bcdbcd7212"
+    },
+    {
+      "source": "config/phorge/overrides/project-membership-management.patch",
+      "savedPath": "_local_deployment_20261105/config/phorge/overrides/project-membership-management.patch",
+      "sha256": "ba47a78429be9a1ea171c09f004b7cd164898bb33af762de4f4dd60956b52c6d"
+    },
+    {
+      "source": "config/phorge/overrides/project-parent-navigation.patch",
+      "savedPath": "_local_deployment_20261105/config/phorge/overrides/project-parent-navigation.patch",
+      "sha256": "03cfab877d4213d949f03ec368d30259d2bfa34239be73135ebd3df0924329c0"
+    },
+    {
+      "source": "config/phorge/overrides/project-progress-entry.patch",
+      "savedPath": "_local_deployment_20261105/config/phorge/overrides/project-progress-entry.patch",
+      "sha256": "87844253535cb382211c3e52f63774949fd6018a94319d0834549387c522aeae"
+    },
+    {
+      "source": "config/phorge/overrides/subproject-permissions.patch",
+      "savedPath": "_local_deployment_20261105/config/phorge/overrides/subproject-permissions.patch",
+      "sha256": "7c9e8e3daad5ae0e30269b3ed925fd12ff4420530e68ac5a33fdf087cdac7b7a"
+    },
+    {
+      "source": "config/phorge/progress-staging/AphrontFormPolicyControl.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/progress-staging/AphrontFormPolicyControl.php",
+      "sha256": "35feb3652c4a8c1d1930c0b4b4b9c3481088cc177d470f9c90591cdd1833c5bf"
+    },
+    {
+      "source": "config/phorge/progress-staging/ManiphestEditEngine.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/progress-staging/ManiphestEditEngine.php",
+      "sha256": "2e763451c05e0dffef41d59c58766d2d549589fb278107d85ffa7ae014e93dd9"
+    },
+    {
+      "source": "config/phorge/progress-staging/PhabricatorChineseTranslation.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/progress-staging/PhabricatorChineseTranslation.php",
+      "sha256": "d85c3455a95bbea3d1d45b92fab1a87fe83355461c2779663ec533d363b2b4f6"
+    },
+    {
+      "source": "config/phorge/progress-staging/PhabricatorManiphestConfigOptions.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/progress-staging/PhabricatorManiphestConfigOptions.php",
+      "sha256": "feabd5c69c411f397f23379f1a096b8cee42a221936127b50d4c9ea65e6ad9a2"
+    },
+    {
+      "source": "config/phorge/progress-staging/PhabricatorPeopleProfileController.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/progress-staging/PhabricatorPeopleProfileController.php",
+      "sha256": "5a4708c199e422c72536fe32375e6f2d74e548f393043fc194a065d80daeb890"
+    },
+    {
+      "source": "config/phorge/progress-staging/PhabricatorPolicyEditController.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/progress-staging/PhabricatorPolicyEditController.php",
+      "sha256": "09065126143d53c985aee2549634047b0f0fffc61bef0955267b14a69bc60ffa"
+    },
+    {
+      "source": "config/phorge/progress-staging/PhabricatorPolicyRulesView.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/progress-staging/PhabricatorPolicyRulesView.php",
+      "sha256": "2df5ed1496ba70124921f82462d7064eb1a57cb169b25c2ab5570e21e47e4b9f"
+    },
+    {
+      "source": "config/phorge/progress-staging/PhabricatorProject.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/progress-staging/PhabricatorProject.php",
+      "sha256": "adf6c63b8afadb816f3dc7fda88ac6c06d1954f8a117886c1e1a82ae293ce679"
+    },
+    {
+      "source": "config/phorge/progress-staging/PhabricatorProjectBoardViewController.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/progress-staging/PhabricatorProjectBoardViewController.php",
+      "sha256": "bc29c0c2b75b16b404460c5a75277ea3a18f532e5080c7bb39e5b32695e0bce9"
+    },
+    {
+      "source": "config/phorge/progress-staging/PhabricatorProjectController.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/progress-staging/PhabricatorProjectController.php",
+      "sha256": "e2ad9029a070b26cc636bc919dba195072c4e14621367942d83f4f61faf819d3"
+    },
+    {
+      "source": "config/phorge/progress-staging/PhabricatorProjectEditEngine.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/progress-staging/PhabricatorProjectEditEngine.php",
+      "sha256": "b66f4bdbd0042a6a3d131e2a7812cdb9e66d3e4f1dcd1480b24a99f5e6d55bee"
+    },
+    {
+      "source": "config/phorge/progress-staging/PhabricatorProjectListView.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/progress-staging/PhabricatorProjectListView.php",
+      "sha256": "cf939212c762b09f46d3965240099d64a04ab6f5fbe91ed4a61f785b8082821c"
+    },
+    {
+      "source": "config/phorge/progress-staging/PhabricatorProjectMemberListView.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/progress-staging/PhabricatorProjectMemberListView.php",
+      "sha256": "c982cf92ccc7925f1e970bd254d46c2ea69c9f2fd1338a19d4abc53c6fa9590a"
+    },
+    {
+      "source": "config/phorge/progress-staging/PhabricatorProjectMembersAddController.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/progress-staging/PhabricatorProjectMembersAddController.php",
+      "sha256": "8ddaaedc2cfa791e0e20c6449980f9b893461dd499cd8cea54b2fe04eb6ac297"
+    },
+    {
+      "source": "config/phorge/progress-staging/PhabricatorProjectMembersRemoveController.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/progress-staging/PhabricatorProjectMembersRemoveController.php",
+      "sha256": "f8883d1b30c783861d108859465c52e4ec817e79342adda0b8efb55d5a2f123b"
+    },
+    {
+      "source": "config/phorge/progress-staging/PhabricatorProjectMembersViewController.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/progress-staging/PhabricatorProjectMembersViewController.php",
+      "sha256": "ffa819dc613cb17496a954283e8d37415aa2bf02ed18a79b30dd8029041846ee"
+    },
+    {
+      "source": "config/phorge/progress-staging/PhabricatorProjectProfileMenuEngine.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/progress-staging/PhabricatorProjectProfileMenuEngine.php",
+      "sha256": "b7bea2b73aabcd913a76d7082a47bdd9bbdafd7e0bd7d5febc1bb73c56cc3460"
+    },
+    {
+      "source": "config/phorge/progress-staging/PhabricatorProjectSubprojectsController.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/progress-staging/PhabricatorProjectSubprojectsController.php",
+      "sha256": "f2d4733cb12ec37560346964feb2dc58ec11b8042cfe2b455f0e999d4eb9648d"
+    },
+    {
+      "source": "config/phorge/progress-staging/PhabricatorProjectTransactionEditor.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/progress-staging/PhabricatorProjectTransactionEditor.php",
+      "sha256": "772dea298c410befd3654c2f5db5afc4db2fc7563000917fd61f1b6f7d326d36"
+    },
+    {
+      "source": "config/phorge/progress-staging/ProjectBoardTaskCard.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/progress-staging/ProjectBoardTaskCard.php",
+      "sha256": "e035bb0aa4b7d66f9075f32cf8617b09fa527ca4f113c888a458a48024af720e"
+    },
+    {
+      "source": "config/phorge/progress-staging/TeamProjectMemberImport.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/progress-staging/TeamProjectMemberImport.php",
+      "sha256": "e6c671adbafa69a028e61ec0d5b49a0647e725418bae63863112b9bd5a1b1397"
+    },
+    {
+      "source": "config/phorge/progress-staging/TeamProjectMembership.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/progress-staging/TeamProjectMembership.php",
+      "sha256": "44a9ae3962999d765f1ae5c0098b535a8a9b3df27a351be0d555b304212b7ec5"
+    },
+    {
+      "source": "config/phorge/progress-staging/TeamProjectProgress.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/progress-staging/TeamProjectProgress.php",
+      "sha256": "a6b658d3ffc5308794551053c08d200b8f0097608f0634486f2b1d510afa5b16"
+    },
+    {
+      "source": "config/phorge/progress-staging/TeamProjectProgressController.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/progress-staging/TeamProjectProgressController.php",
+      "sha256": "5d89f8da9e1b6cca7bf7fd5300d6f10160af60d9d53a6634faf4efc6d7c8be72"
+    },
+    {
+      "source": "config/phorge/progress-staging/TeamProjectProgressMenuItem.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/progress-staging/TeamProjectProgressMenuItem.php",
+      "sha256": "18df94d9ab7b6ef2241788a5daf4491d36a2c9399912e8263bec50cca9031c78"
+    },
+    {
+      "source": "config/phorge/progress-staging/TeamProjectTeamPolicy.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/progress-staging/TeamProjectTeamPolicy.php",
+      "sha256": "a1aa6a8073341b35ac4b5b89799627e7f764ae35128bcdde2da2ef66615b1274"
+    },
+    {
+      "source": "config/phorge/session-staging/TeamEntrySessionGuard.php",
+      "savedPath": "_local_deployment_20261105/config/phorge/session-staging/TeamEntrySessionGuard.php",
+      "sha256": "7c10a0614eb6dc2d5102db9dc9944f5535cd4b3971bd2f0c27446904de2e2606"
+    },
+    {
+      "source": "config/phorge-apache.conf",
+      "savedPath": "_local_deployment_20261105/config/phorge-apache.conf",
+      "sha256": "d729151e16a16ac1340d78ef70f87618fb302bdd2026bbd5bdc08892cb08602b"
+    },
+    {
+      "source": "config/phorge-trusted-proxy.php",
+      "savedPath": "_local_deployment_20261105/config/phorge-trusted-proxy.php",
+      "sha256": "2c1bdaf494950f0989631ce74bf1af16e510a4cf6d904e70fd90135a35609c2c"
+    },
+    {
+      "source": "config/registration/README.md",
+      "savedPath": "_local_deployment_20261105/config/registration/README.md",
+      "sha256": "0694ec0446db2717b9a0eb1053165f6423d3de210b50bde1ce58b2ff79aeab86"
+    },
+    {
+      "source": "config/registration/credential_hashes.py",
+      "savedPath": "_local_deployment_20261105/config/registration/credential_hashes.py",
+      "sha256": "eb449ccd0ba3b685c99c2e11866d28adf4429f77b664896b3f376871fd313c27"
+    },
+    {
+      "source": "config/registration/server.py",
+      "savedPath": "_local_deployment_20261105/config/registration/server.py",
+      "sha256": "391ab144bb68701955fbf885d1389abd0d726dc818ed05f5aa4add9190b760df"
+    },
+    {
+      "source": "docker/identity.Dockerfile",
+      "savedPath": "_local_deployment_20261105/docker/identity.Dockerfile",
+      "sha256": "062fb2f3b345c69fd72c28907b464a211d5f9218249c52fde6ca2bc2e16fa4fc"
+    },
+    {
+      "source": "docker/maintenance.Dockerfile",
+      "savedPath": "_local_deployment_20261105/docker/maintenance.Dockerfile",
+      "sha256": "bad88128127fbebd6097ee5663b920708417d502d8abc82ad2d83395b74d579d"
+    },
+    {
+      "source": "scripts/acceptance-phorge.php",
+      "savedPath": "_local_deployment_20261105/scripts/acceptance-phorge.php",
+      "sha256": "40d12dca5f5e4e3e75edef761b873030fe9bfcba736ba64f89314747abea69c6"
+    },
+    {
+      "source": "scripts/approve-acceptance-users.php",
+      "savedPath": "_local_deployment_20261105/scripts/approve-acceptance-users.php",
+      "sha256": "c78cc3d12921c11252d8e8723c3e128a5779c83e915fc030f9750b73bff3a9f5"
+    },
+    {
+      "source": "scripts/approve-registration.py",
+      "savedPath": "_local_deployment_20261105/scripts/approve-registration.py",
+      "sha256": "d6fd2532e653f44b9fc94591538fcda9f49f7375546b43a8d4bd14982985d212"
+    },
+    {
+      "source": "scripts/backup.py",
+      "savedPath": "_local_deployment_20261105/scripts/backup.py",
+      "sha256": "79c23e9894d2ee7e2ad8bb0308ba717297156c7b3356f99f0faea28df2357a98"
+    },
+    {
+      "source": "scripts/build-identity.sh",
+      "savedPath": "_local_deployment_20261105/scripts/build-identity.sh",
+      "sha256": "081773e2d0ba5c7e1fb2eec17fa4ce8fd706b425ced7a067369db7139e019630"
+    },
+    {
+      "source": "scripts/build-images.sh",
+      "savedPath": "_local_deployment_20261105/scripts/build-images.sh",
+      "sha256": "5528986d3e1552892162b1bf8d38877733e4c98820308b9f6313b095ba7ac53e"
+    },
+    {
+      "source": "scripts/build-maintenance.sh",
+      "savedPath": "_local_deployment_20261105/scripts/build-maintenance.sh",
+      "sha256": "2c45aaf10ea7d0a6eee89312133cf18ea14dea359373688610a656a850d5cba7"
+    },
+    {
+      "source": "scripts/check-dingtalk.py",
+      "savedPath": "_local_deployment_20261105/scripts/check-dingtalk.py",
+      "sha256": "66fb881c065f58012f31adc2f5d938869ba786f673035aa11ef80fb4d8e9814f"
+    },
+    {
+      "source": "scripts/cleanup-test-accounts-native.php",
+      "savedPath": "_local_deployment_20261105/scripts/cleanup-test-accounts-native.php",
+      "sha256": "e00517e8ffa44e4e3e0c885cd11549ee400b20d8eefaecf28979719702606766"
+    },
+    {
+      "source": "scripts/cleanup-test-accounts.py",
+      "savedPath": "_local_deployment_20261105/scripts/cleanup-test-accounts.py",
+      "sha256": "499ea0e406b18a10c90571ad7726abae1ce2ac0f929df69247b53e86065ea561"
+    },
+    {
+      "source": "scripts/cleanup-test-projects-native.php",
+      "savedPath": "_local_deployment_20261105/scripts/cleanup-test-projects-native.php",
+      "sha256": "d6578de9953e92aa71eafc51e6d0f6448e9e70d137a1b656f79cda3f213f0f61"
+    },
+    {
+      "source": "scripts/cleanup-test-projects.py",
+      "savedPath": "_local_deployment_20261105/scripts/cleanup-test-projects.py",
+      "sha256": "a25c347b1694868aa98908040c8fdd7593f846d81df8ec76095995e713fba84b"
+    },
+    {
+      "source": "scripts/compose-dingtalk.sh",
+      "savedPath": "_local_deployment_20261105/scripts/compose-dingtalk.sh",
+      "sha256": "f1e485c7f94d4769e9c9977f9952899e0d5610db3b38f23ce45c2b4bc72502cb"
+    },
+    {
+      "source": "scripts/compose.sh",
+      "savedPath": "_local_deployment_20261105/scripts/compose.sh",
+      "sha256": "d386af98489f55acaa0fe496d636cbb122767c1e9c064705c5381acb9c9a0825"
+    },
+    {
+      "source": "scripts/configure-private-defaults.php",
+      "savedPath": "_local_deployment_20261105/scripts/configure-private-defaults.php",
+      "sha256": "e22b18ac40550305e186ff4376d7b81959e7eff26970efd8ef77aefa051f1146"
+    },
+    {
+      "source": "scripts/configure-provider.php",
+      "savedPath": "_local_deployment_20261105/scripts/configure-provider.php",
+      "sha256": "1fb41fbf219d722cd40c9c9d0a0cc6c60c362cc72385954892a47b7a9b2608ff"
+    },
+    {
+      "source": "scripts/configure-registration-policy.php",
+      "savedPath": "_local_deployment_20261105/scripts/configure-registration-policy.php",
+      "sha256": "4d33a0ee84c39175af9dc82839e724a452f6def61ee82edcb0d00dca37428c6f"
+    },
+    {
+      "source": "scripts/fetch-sources.py",
+      "savedPath": "_local_deployment_20261105/scripts/fetch-sources.py",
+      "sha256": "db4fd94530c984bb3a1e1984887ff9e53ac7534c936a7064b2aa13ba355fa0c3"
+    },
+    {
+      "source": "scripts/generate-core.py",
+      "savedPath": "_local_deployment_20261105/scripts/generate-core.py",
+      "sha256": "3dff6181ca494857a406f6f374f8a4dbd0b904d8f43db0744ae69935020d0869"
+    },
+    {
+      "source": "scripts/generate-identity.py",
+      "savedPath": "_local_deployment_20261105/scripts/generate-identity.py",
+      "sha256": "c76f57c9dbb554b878283bf86ff563421f245d60953698fb762a44ee9a4aa72d"
+    },
+    {
+      "source": "scripts/init-dingtalk.py",
+      "savedPath": "_local_deployment_20261105/scripts/init-dingtalk.py",
+      "sha256": "075c925afd4e9a1445ce24cfe05d111779e68436d55b0f270da85656bab90070"
+    },
+    {
+      "source": "scripts/init-local.py",
+      "savedPath": "_local_deployment_20261105/scripts/init-local.py",
+      "sha256": "1aba16b0e12640ae9bbb912650a29ade8b258ba895c4d2557be5e5780392ac28"
+    },
+    {
+      "source": "scripts/init-maintenance.py",
+      "savedPath": "_local_deployment_20261105/scripts/init-maintenance.py",
+      "sha256": "7834d9df2f7f41cb6d6b2cc1e4a2600fa7878b2f185af8a3e302d01005a0cc8b"
+    },
+    {
+      "source": "scripts/init-public-tls.py",
+      "savedPath": "_local_deployment_20261105/scripts/init-public-tls.py",
+      "sha256": "01debe33c2d99a5f4038c1fdd20abc74bf4589e96fdf07e54f28fecd80bbeb51"
+    },
+    {
+      "source": "scripts/init-registration.py",
+      "savedPath": "_local_deployment_20261105/scripts/init-registration.py",
+      "sha256": "c6d6a49895eba8e11d1699cc9a932185d610c3af664daa4351ad2ac18e02b1fc"
+    },
+    {
+      "source": "scripts/init-testing-mail.py",
+      "savedPath": "_local_deployment_20261105/scripts/init-testing-mail.py",
+      "sha256": "c2559d9a8e1ef5f7a30bcbf70eed7ce37bb560c5481fd07adb259802ccd19d66"
+    },
+    {
+      "source": "scripts/inspect-test-accounts.php",
+      "savedPath": "_local_deployment_20261105/scripts/inspect-test-accounts.php",
+      "sha256": "6c1f043ed97d419328c99e87917aa7045f944f736ece6b6c2382cf580a729c79"
+    },
+    {
+      "source": "scripts/lookup-password-user.php",
+      "savedPath": "_local_deployment_20261105/scripts/lookup-password-user.php",
+      "sha256": "0e55b99c70ed37a7b656f3a23227a9e0512b2eddd0739b3676164fd453235f09"
+    },
+    {
+      "source": "scripts/manage-password.py",
+      "savedPath": "_local_deployment_20261105/scripts/manage-password.py",
+      "sha256": "3e2bd54640ca4584a41e9609e44e6d942c2402bc3928723b24d3a55e9b66cbe6"
+    },
+    {
+      "source": "scripts/migrate.py",
+      "savedPath": "_local_deployment_20261105/scripts/migrate.py",
+      "sha256": "ead31ace6e7377ffffdaa12d6375e588c9dbb1c7333ae84c9668072f369f94d0"
+    },
+    {
+      "source": "scripts/migration_endpoint.py",
+      "savedPath": "_local_deployment_20261105/scripts/migration_endpoint.py",
+      "sha256": "ee91f7c8d0a2dd2deb2abd8b304522934492b1ffbbab3c1ddaa1dcd304e227d5"
+    },
+    {
+      "source": "scripts/migration_preflight.py",
+      "savedPath": "_local_deployment_20261105/scripts/migration_preflight.py",
+      "sha256": "1280cfb7260822b7ffc4ec1cbd51d6c1568640b58226c5a1692a0b068c5dd4b3"
+    },
+    {
+      "source": "scripts/migration_probe.php",
+      "savedPath": "_local_deployment_20261105/scripts/migration_probe.php",
+      "sha256": "d5027811ab8357020afdb532638dbc6bd5a08e253a020bf58130e8b1b03aee8a"
+    },
+    {
+      "source": "scripts/migration_process.py",
+      "savedPath": "_local_deployment_20261105/scripts/migration_process.py",
+      "sha256": "f367903e95435b9ef7a0f35682449947ea97765d29f492e1d0c15b07aff39725"
+    },
+    {
+      "source": "scripts/password_store.py",
+      "savedPath": "_local_deployment_20261105/scripts/password_store.py",
+      "sha256": "3a6c08f49fc70e790e5ee44f78011139b1cdf680e7dcba65654c03a6eb0f6ffd"
+    },
+    {
+      "source": "scripts/prepare-dingtalk.py",
+      "savedPath": "_local_deployment_20261105/scripts/prepare-dingtalk.py",
+      "sha256": "db6f4364429517690dd4ef60b30458eb687dfbbd3e17ab5d9a5f75b8885adbfb"
+    },
+    {
+      "source": "scripts/prepare-stargate-password.py",
+      "savedPath": "_local_deployment_20261105/scripts/prepare-stargate-password.py",
+      "sha256": "d973b1bc11388de9644b052ede0bab9b7f1c988392324e73b6e5ebd555b13bc3"
+    },
+    {
+      "source": "scripts/prepare_migration.py",
+      "savedPath": "_local_deployment_20261105/scripts/prepare_migration.py",
+      "sha256": "a0de75835b82a198ea6ee83f80a42544b54d942bb0271353024d1bf9f9720a5c"
+    },
+    {
+      "source": "scripts/provision-registered-user.php",
+      "savedPath": "_local_deployment_20261105/scripts/provision-registered-user.php",
+      "sha256": "36782a08059cdf5bac4b915846747ab7edfe3ca43eb761fd88daab087ad21fcf"
+    },
+    {
+      "source": "scripts/provision-site-admin.php",
+      "savedPath": "_local_deployment_20261105/scripts/provision-site-admin.php",
+      "sha256": "23fed89c9200ce016bc1be4a96c714610d6010ffdb75567b0d497b14fe40725d"
+    },
+    {
+      "source": "scripts/recheck-project-isolated.py",
+      "savedPath": "_local_deployment_20261105/scripts/recheck-project-isolated.py",
+      "sha256": "2f52f41b21ce0cea93915ab2ef62755ca97b757fd174f081f13aec9bd94e2b24"
+    },
+    {
+      "source": "scripts/restore-check.py",
+      "savedPath": "_local_deployment_20261105/scripts/restore-check.py",
+      "sha256": "26c035dd81d000da90dedbd1fc185c974f88b17ec1f881acbf425f2bcdf06ed4"
+    },
+    {
+      "source": "scripts/setup-session-consistency.php",
+      "savedPath": "_local_deployment_20261105/scripts/setup-session-consistency.php",
+      "sha256": "2c69f1db9e441f9136c695fa592dcf97dfdd3ea80f7946c460eaa5072fe44e2d"
+    },
+    {
+      "source": "scripts/smoke-core.py",
+      "savedPath": "_local_deployment_20261105/scripts/smoke-core.py",
+      "sha256": "9c6efdca3c66fabd25193cb3b199e545799f584034c41a5cd47a0efc320593c7"
+    },
+    {
+      "source": "scripts/test-dingtalk-mocks.sh",
+      "savedPath": "_local_deployment_20261105/scripts/test-dingtalk-mocks.sh",
+      "sha256": "74818eb8d7d57bf6bd8f92e9212e612f6afabdd3a03e0831324db771992a1639"
+    },
+    {
+      "source": "scripts/test-file-policy-http.py",
+      "savedPath": "_local_deployment_20261105/scripts/test-file-policy-http.py",
+      "sha256": "88a719b173fc5fa93fcb422227b9feda459b251f2c1ce7831da1762901ab8ff9"
+    },
+    {
+      "source": "scripts/test-file-policy.php",
+      "savedPath": "_local_deployment_20261105/scripts/test-file-policy.php",
+      "sha256": "08df05ac1b4cf5aaf0f43c48407e9db8fb5a45fe1c541be5815c370f962f2bb6"
+    },
+    {
+      "source": "scripts/test-identity-password-init.py",
+      "savedPath": "_local_deployment_20261105/scripts/test-identity-password-init.py",
+      "sha256": "2fff3cb95f39c548323225c50a40e976c30ec881f266ff95ee62fe8d7da1e31b"
+    },
+    {
+      "source": "scripts/test-password-management.py",
+      "savedPath": "_local_deployment_20261105/scripts/test-password-management.py",
+      "sha256": "6ddbd869de940af8eb72e5a16fc367da37dc5dd766550286493b2d848b7a9269"
+    },
+    {
+      "source": "scripts/test-project-access-ui-isolated.py",
+      "savedPath": "_local_deployment_20261105/scripts/test-project-access-ui-isolated.py",
+      "sha256": "dd6578fae4eed5b4440b5f8f4d72b6a8ee3169cd138c61a8d980e7877db406a6"
+    },
+    {
+      "source": "scripts/test-project-isolated.py",
+      "savedPath": "_local_deployment_20261105/scripts/test-project-isolated.py",
+      "sha256": "eaa65cfd41bd9d8fc5a304efc44af30a540e373126636b5b077c6189318a4f2f"
+    },
+    {
+      "source": "scripts/test-project-members-ui-isolated.py",
+      "savedPath": "_local_deployment_20261105/scripts/test-project-members-ui-isolated.py",
+      "sha256": "c07b03f60d1dbb45a5889e7f87c098e6fd55c1d69d3f30de168a63cb62038fdd"
+    },
+    {
+      "source": "scripts/test-project-organization-ui-isolated.py",
+      "savedPath": "_local_deployment_20261105/scripts/test-project-organization-ui-isolated.py",
+      "sha256": "1a85565757057d8fd279ae2278c0c8ef179ef89a5515be0828ab0f6ac3b782f1"
+    },
+    {
+      "source": "scripts/test-project-progress-ui-isolated.py",
+      "savedPath": "_local_deployment_20261105/scripts/test-project-progress-ui-isolated.py",
+      "sha256": "fe9fae553c9cc806e87f4cbd19555724ed8fe2febb93323882fcb3ec69b7770e"
+    },
+    {
+      "source": "scripts/test-project-ui-isolated.py",
+      "savedPath": "_local_deployment_20261105/scripts/test-project-ui-isolated.py",
+      "sha256": "35105995981653a318abbb5b5685353ebe69d8b046d3cb4bde3aee1d35bdc3d1"
+    },
+    {
+      "source": "scripts/test-registration-approval.py",
+      "savedPath": "_local_deployment_20261105/scripts/test-registration-approval.py",
+      "sha256": "e6e4366d732282c570694e4509c008d01ce4541bb2599a7b4d852b48f9499859"
+    },
+    {
+      "source": "scripts/test-session-consistency-browser.mjs",
+      "savedPath": "_local_deployment_20261105/scripts/test-session-consistency-browser.mjs",
+      "sha256": "48e4b44271ad60c2e6ff5af8de7bd3d652539aa328b81ee45f0b8e29bb13b80c"
+    },
+    {
+      "source": "scripts/test-session-consistency.py",
+      "savedPath": "_local_deployment_20261105/scripts/test-session-consistency.py",
+      "sha256": "dc616d5ce4d1c5ad391a89f56337795779d9651ea90b8c79059fff1c0cdc5c05"
+    },
+    {
+      "source": "scripts/test-session-recovery-isolated.py",
+      "savedPath": "_local_deployment_20261105/scripts/test-session-recovery-isolated.py",
+      "sha256": "a8153f8e790693066778e8e1221ca49d633da0638fcacee828f50bb03d98a6fa"
+    },
+    {
+      "source": "scripts/verify-identity-initial.py",
+      "savedPath": "_local_deployment_20261105/scripts/verify-identity-initial.py",
+      "sha256": "cca23b8a4005b82b2942046a2f0b0389ed89a227500f093a92f7586c72274fd2"
+    },
+    {
+      "source": "scripts/verify-local.py",
+      "savedPath": "_local_deployment_20261105/scripts/verify-local.py",
+      "sha256": "67734faa6581daf4bab5b8abf5a695067dcc136ef25b10fe871a10972439cdf0"
+    },
+    {
+      "source": "scripts/verify-proxy-trust.py",
+      "savedPath": "_local_deployment_20261105/scripts/verify-proxy-trust.py",
+      "sha256": "b6f0571c77e59e65eb7c143d2035c3858592a286ad08dac44e6f4362ce32bd4b"
+    },
+    {
+      "source": "scripts/verify-public.py",
+      "savedPath": "_local_deployment_20261105/scripts/verify-public.py",
+      "sha256": "a7c86bee98f9444081277f6035f971fb570369ed41e1d27bf6150a297212f454"
+    },
+    {
+      "source": "tests/browser/boards.mjs",
+      "savedPath": "_local_deployment_20261105/tests/browser/boards.mjs",
+      "sha256": "df33df467735580715b2a9dc7bb6f9f7b344864076723872c274f7575490c374"
+    },
+    {
+      "source": "tests/browser/file-probe.mjs",
+      "savedPath": "_local_deployment_20261105/tests/browser/file-probe.mjs",
+      "sha256": "0c49a13274151fe7226803307bd024ae2085b7ea36fd400db69ad515c78aaeaa"
+    },
+    {
+      "source": "tests/browser/identity-negative.mjs",
+      "savedPath": "_local_deployment_20261105/tests/browser/identity-negative.mjs",
+      "sha256": "6a37162c4b4c54b4d8a22760ecfc3a702b0b5b0deb4d8209dd5fffe418554e46"
+    },
+    {
+      "source": "tests/browser/identity.mjs",
+      "savedPath": "_local_deployment_20261105/tests/browser/identity.mjs",
+      "sha256": "c797276333e7fe6c02674f7f505332bf6d621eddbbeda430186604a6fac5113f"
+    },
+    {
+      "source": "tests/browser/maintenance-admin-self-reset.mjs",
+      "savedPath": "_local_deployment_20261105/tests/browser/maintenance-admin-self-reset.mjs",
+      "sha256": "3ca0117394232b3038d453fe4a7b78648a1d7c7f5d029780d5601d369d6fcef1"
+    },
+    {
+      "source": "tests/browser/maintenance-cleanup.mjs",
+      "savedPath": "_local_deployment_20261105/tests/browser/maintenance-cleanup.mjs",
+      "sha256": "166a8a6c77bedee470689cd2d49049c8a5bb04d0a0cb7cf3419c08f163121df1"
+    },
+    {
+      "source": "tests/browser/maintenance-lifecycle.mjs",
+      "savedPath": "_local_deployment_20261105/tests/browser/maintenance-lifecycle.mjs",
+      "sha256": "9c8a36cf19758bdffa8582b87f23f86f145dc614c4d96a3ed52d390bdec6d0f0"
+    },
+    {
+      "source": "tests/browser/maintenance-security.mjs",
+      "savedPath": "_local_deployment_20261105/tests/browser/maintenance-security.mjs",
+      "sha256": "26c6e0d4c582bab0d64b1783fb7665cf832dd1daba7f383d987b679f5443b369"
+    },
+    {
+      "source": "tests/browser/migration-smoke.mjs",
+      "savedPath": "_local_deployment_20261105/tests/browser/migration-smoke.mjs",
+      "sha256": "045cf68ff7f0e29370e8fff1dcb432bb50f8eb9ed10f075028e18ef32e023b36"
+    },
+    {
+      "source": "tests/browser/package-lock.json",
+      "savedPath": "_local_deployment_20261105/tests/browser/package-lock.json",
+      "sha256": "23d36b468f68fbcf4f35ed667bccacad608e2d57b725a2508e82addefb340ecd"
+    },
+    {
+      "source": "tests/browser/package.json",
+      "savedPath": "_local_deployment_20261105/tests/browser/package.json",
+      "sha256": "23b5f43192fe46cb286f55cd68edb576c011816dcbf48432dcbbfdc22b4ba5d3"
+    },
+    {
+      "source": "tests/browser/password-admin.mjs",
+      "savedPath": "_local_deployment_20261105/tests/browser/password-admin.mjs",
+      "sha256": "ca318053aacfbbb48de103a1546474be074c07868ea8062c283ef86bbd7bbd74"
+    },
+    {
+      "source": "tests/browser/password-login.mjs",
+      "savedPath": "_local_deployment_20261105/tests/browser/password-login.mjs",
+      "sha256": "d1a635e251544b88733aec6af641d0d5df7dde2959e456a65b8be3f38fbb73da"
+    },
+    {
+      "source": "tests/browser/project-access-native.mjs",
+      "savedPath": "_local_deployment_20261105/tests/browser/project-access-native.mjs",
+      "sha256": "da79645ddd4a0faf998a75e211a3ff79d5ed147bba4f6593651246beafc1b752"
+    },
+    {
+      "source": "tests/browser/project-hierarchy-native.mjs",
+      "savedPath": "_local_deployment_20261105/tests/browser/project-hierarchy-native.mjs",
+      "sha256": "d6c144a24823322ae35c9be2070783aa39b2b13d00d848db2d69234cb655d3a6"
+    },
+    {
+      "source": "tests/browser/project-members-native.mjs",
+      "savedPath": "_local_deployment_20261105/tests/browser/project-members-native.mjs",
+      "sha256": "fa1a8a2efb9fa5df664d53c1d6c00520f05afc55ca16f5cf1b0962c81c466dda"
+    },
+    {
+      "source": "tests/browser/project-organization-native.mjs",
+      "savedPath": "_local_deployment_20261105/tests/browser/project-organization-native.mjs",
+      "sha256": "aa912b73a354b204d619edce2011c444c00b09e7e484cb5ffe5ba2d1e2af4a55"
+    },
+    {
+      "source": "tests/browser/project-progress-native.mjs",
+      "savedPath": "_local_deployment_20261105/tests/browser/project-progress-native.mjs",
+      "sha256": "e258e3d2a1fb45d85e83dcf0a0e99987c6b7b0bc06ec4e981f63663c27ee60c8"
+    },
+    {
+      "source": "tests/browser/public-registration.mjs",
+      "savedPath": "_local_deployment_20261105/tests/browser/public-registration.mjs",
+      "sha256": "64d90058266d57cba1f1ebdc6b1f749d8b70dade261f4f3cc826aa12d0cf5aa6"
+    },
+    {
+      "source": "tests/browser/real-user-access-smoke.mjs",
+      "savedPath": "_local_deployment_20261105/tests/browser/real-user-access-smoke.mjs",
+      "sha256": "d8aa293aaf38dff2ff282ace9b115b366b09d7f71847dc1076fe3bfd91d0a15a"
+    },
+    {
+      "source": "tests/browser/registration.mjs",
+      "savedPath": "_local_deployment_20261105/tests/browser/registration.mjs",
+      "sha256": "e13351770619247caff1ca25cf80e21ab52552138acf6ec95d55472016af5764"
+    },
+    {
+      "source": "tests/maintenance/check_backup.py",
+      "savedPath": "_local_deployment_20261105/tests/maintenance/check_backup.py",
+      "sha256": "9f264cf76b829ee73491b8ec930561d6562ab60af44c36a0ab30b3aca11dfd04"
+    },
+    {
+      "source": "tests/maintenance/check_real_users_backup.py",
+      "savedPath": "_local_deployment_20261105/tests/maintenance/check_real_users_backup.py",
+      "sha256": "dabb504ed712b0b027dbb6d385f3ae3dbaa16a78ac6b17f39fddc9f02fe85498"
+    },
+    {
+      "source": "tests/maintenance/test_initialization.py",
+      "savedPath": "_local_deployment_20261105/tests/maintenance/test_initialization.py",
+      "sha256": "f1c2467789598e70ada7eb61096b9997c656cb3bfa28b7e97357bc865d353e02"
+    },
+    {
+      "source": "tests/maintenance/test_service.py",
+      "savedPath": "_local_deployment_20261105/tests/maintenance/test_service.py",
+      "sha256": "0767b0a81768d9e6dd829ae5e48e36c0e8493e71fe67a557f3b6fdfcb749a008"
+    },
+    {
+      "source": "tests/maintenance/test_shutdown.py",
+      "savedPath": "_local_deployment_20261105/tests/maintenance/test_shutdown.py",
+      "sha256": "bdd68e1c8a9e7a2e9a7cf44dded8493d73c69b08e9dc509d0e7d54774adb60dd"
+    },
+    {
+      "source": "tests/migration/browser_probe.php",
+      "savedPath": "_local_deployment_20261105/tests/migration/browser_probe.php",
+      "sha256": "8bc0b615464541592c4c11e7de94fdbd3d3ae64a0b180797aa30b3908042022c"
+    },
+    {
+      "source": "tests/migration/test_backup.py",
+      "savedPath": "_local_deployment_20261105/tests/migration/test_backup.py",
+      "sha256": "2f9988440d7ed3a3bbb13aea4ab83b5732124606bca0dc2dbf07ab00e354ded2"
+    },
+    {
+      "source": "tests/migration/test_browser_guard.py",
+      "savedPath": "_local_deployment_20261105/tests/migration/test_browser_guard.py",
+      "sha256": "424da56dee0189e0d80ae9a29e7c076019f470bb5f9c98cea47f7a77e779c344"
+    },
+    {
+      "source": "tests/migration/test_endpoint.py",
+      "savedPath": "_local_deployment_20261105/tests/migration/test_endpoint.py",
+      "sha256": "2b1f7d30a283c936c47b00eeb541087a932ed5d654a28bf27956840769dd22b5"
+    },
+    {
+      "source": "tests/migration/test_migrate.py",
+      "savedPath": "_local_deployment_20261105/tests/migration/test_migrate.py",
+      "sha256": "0205f91a236df4337ca4edc826299bbbf7b43da17e3437a77e28dc5bc1174668"
+    },
+    {
+      "source": "tests/migration/test_preflight.py",
+      "savedPath": "_local_deployment_20261105/tests/migration/test_preflight.py",
+      "sha256": "2b78902ee69bb7362b84f93646cbd0a9ce9c9ab99198f8e088638429821aba3c"
+    },
+    {
+      "source": "tests/migration/test_prepare.py",
+      "savedPath": "_local_deployment_20261105/tests/migration/test_prepare.py",
+      "sha256": "1c13efe1a37ddd2f3963047fff18308ff9543e7b36569626b4c6336be94158af"
+    },
+    {
+      "source": "tests/migration/test_process.py",
+      "savedPath": "_local_deployment_20261105/tests/migration/test_process.py",
+      "sha256": "24349e4b9637536a8a499c663ccb9eff8914b96a3bd6d2668a3811be7e7b39eb"
+    },
+    {
+      "source": "tests/people-profile-denial.php",
+      "savedPath": "_local_deployment_20261105/tests/people-profile-denial.php",
+      "sha256": "337535e0389d5535bf9ed38bf95c83808c7bf4e8379682c601cde137425c60e2"
+    },
+    {
+      "source": "tests/permissions/audit-legacy-parent-members.php",
+      "savedPath": "_local_deployment_20261105/tests/permissions/audit-legacy-parent-members.php",
+      "sha256": "dcb586c74e8746865e038aaec7f47df1b980ade0ca34d8ffbd7bccaf0f4eb1b5"
+    },
+    {
+      "source": "tests/permissions/policy-display.php",
+      "savedPath": "_local_deployment_20261105/tests/permissions/policy-display.php",
+      "sha256": "c453b44888bd7aac3ea339ad5cafeb14753d7de45260b50761eb98abc45b74db"
+    },
+    {
+      "source": "tests/permissions/policy-options.php",
+      "savedPath": "_local_deployment_20261105/tests/permissions/policy-options.php",
+      "sha256": "aba23a74ef622d318311be4e8fdd741447ac0fcda9979fdd02ab55014b9642f7"
+    },
+    {
+      "source": "tests/permissions/private-defaults.php",
+      "savedPath": "_local_deployment_20261105/tests/permissions/private-defaults.php",
+      "sha256": "0d6b63b551928efe5f5e666c29da15e6d5185e3adb8c98d9f1cbca34bd0aa07c"
+    },
+    {
+      "source": "tests/permissions/project-access.php",
+      "savedPath": "_local_deployment_20261105/tests/permissions/project-access.php",
+      "sha256": "9dacecc958a5e56cb6cb5a627102b5a1d3f415a45eca8c589cf0d1ba571f84b4"
+    },
+    {
+      "source": "tests/permissions/project-member-import.php",
+      "savedPath": "_local_deployment_20261105/tests/permissions/project-member-import.php",
+      "sha256": "2053625a415f40e116e8956737b46a00e834ff80598db062cdfdee84e60e3990"
+    },
+    {
+      "source": "tests/permissions/project-membership.php",
+      "savedPath": "_local_deployment_20261105/tests/permissions/project-membership.php",
+      "sha256": "c34f9ec157020c34e5ad0ff2323b7a00750dcdf18e4a6c81347209e749b6a93e"
+    },
+    {
+      "source": "tests/permissions/project-organization.php",
+      "savedPath": "_local_deployment_20261105/tests/permissions/project-organization.php",
+      "sha256": "ced04abeb8095fd7213e633e377b293d24e2efce0b63853b3ed06e7ac786fac8"
+    },
+    {
+      "source": "tests/permissions/project-progress.php",
+      "savedPath": "_local_deployment_20261105/tests/permissions/project-progress.php",
+      "sha256": "6ee7117d8e642ac98d04b1c616a9f6536e0e50f8dd93bf398ad2d5fd2baf6ddd"
+    },
+    {
+      "source": "tests/permissions/project-team-policy.php",
+      "savedPath": "_local_deployment_20261105/tests/permissions/project-team-policy.php",
+      "sha256": "3a68e4f055a482445788912c8fc00435e086389740fdfb68bed8ba21552c9015"
+    },
+    {
+      "source": "tests/permissions/snapshot-organization-schema.php",
+      "savedPath": "_local_deployment_20261105/tests/permissions/snapshot-organization-schema.php",
+      "sha256": "a8815d4da0e73b61b22baa4f1a660b8521cf33c6664a440e0772ebb85bd2be8a"
+    },
+    {
+      "source": "tests/permissions/snapshot-project-state.php",
+      "savedPath": "_local_deployment_20261105/tests/permissions/snapshot-project-state.php",
+      "sha256": "f91e790d54b31a40a4237525043636d1fd9e3732d665ed31004caf6722437a60"
+    },
+    {
+      "source": "tests/permissions/subproject-permissions.php",
+      "savedPath": "_local_deployment_20261105/tests/permissions/subproject-permissions.php",
+      "sha256": "0dfd005612e3bc33aca1aec9367a7e38183b2e254d3f4e9c4828e79d5deec3ca"
+    },
+    {
+      "source": "tests/project-access-ui-fixture.php",
+      "savedPath": "_local_deployment_20261105/tests/project-access-ui-fixture.php",
+      "sha256": "59db5f7c2f006ac7ab6b8c692d672e55980b6d6538ccc4b3e6386e8e6bf85a73"
+    },
+    {
+      "source": "tests/project-hierarchy.php",
+      "savedPath": "_local_deployment_20261105/tests/project-hierarchy.php",
+      "sha256": "8a2b67c16a362267cd1d009cd76437f4352a3ccd8995f4a31932d8d2da8353da"
+    },
+    {
+      "source": "tests/project-members-ui-fixture.php",
+      "savedPath": "_local_deployment_20261105/tests/project-members-ui-fixture.php",
+      "sha256": "699701761815a7eda1658363a557e894023faf98b9681a13c0fcff3910b487e2"
+    },
+    {
+      "source": "tests/project-navigation.php",
+      "savedPath": "_local_deployment_20261105/tests/project-navigation.php",
+      "sha256": "4e60340610720d8215680039a7ed31924bd6b9ae3e277305befc5548383d438a"
+    },
+    {
+      "source": "tests/project-organization-ui-fixture.php",
+      "savedPath": "_local_deployment_20261105/tests/project-organization-ui-fixture.php",
+      "sha256": "bf7ed4970ff31e948900ebdd3d3af390962115d62fd71b6762c1f0c154a24dac"
+    },
+    {
+      "source": "tests/project-overrides.py",
+      "savedPath": "_local_deployment_20261105/tests/project-overrides.py",
+      "sha256": "d0e868a996627bf600ba80b841aad47d69dee6da37c9599fa2ba1432a0a56dc4"
+    },
+    {
+      "source": "tests/project-progress-ui-fixture.php",
+      "savedPath": "_local_deployment_20261105/tests/project-progress-ui-fixture.php",
+      "sha256": "64e65e28ae8b8aff504e4d88b958bed2adf7abfdacebf3d6c4b18431e7b73bb8"
+    },
+    {
+      "source": "tests/project-ui-fixture.php",
+      "savedPath": "_local_deployment_20261105/tests/project-ui-fixture.php",
+      "sha256": "6c3380ec086866d4620e531051e645023284f33554d67b39c54a896da7f99257"
+    },
+    {
+      "source": "tests/registration/test_server.py",
+      "savedPath": "_local_deployment_20261105/tests/registration/test_server.py",
+      "sha256": "8e9dfad6260247ee4aae28e93aa172f12537d315b08103bab57b6a0bd0789b32"
+    },
+    {
+      "source": "tests/session-recovery-fixture.php",
+      "savedPath": "_local_deployment_20261105/tests/session-recovery-fixture.php",
+      "sha256": "cc3157f7aeb0e9b3f324c503629d375f434d4d0f3a084d110f5dccd48e4e06ba"
+    },
+    {
+      "source": "reports/phorge-pr48-50-atomic-decomposition-20261103/atomic-decomposition.html",
+      "savedPath": "_local_deployment_20261105/reports/atomic-decomposition.html",
+      "sha256": "4c66808263a864858ff1651d3ae377eb0c301099d3c0ccbdb3f79e56805ed8d7"
+    },
+    {
+      "source": "reports/phorge-pr48-50-atomic-decomposition-20261103/atomic-decomposition.csv",
+      "savedPath": "_local_deployment_20261105/reports/atomic-decomposition.csv",
+      "sha256": "c8e51e8cf87e31a9850bf18c5a1def293233d41c75c18fe29bfed7eb7093738d"
+    },
+    {
+      "source": "reports/phorge-pr48-50-atomic-decomposition-20261103/reference-crosswalk.csv",
+      "savedPath": "_local_deployment_20261105/reports/reference-crosswalk.csv",
+      "sha256": "abcc67fefc1fc09dfb553869635b4dda3c9057b16934a7965142c7e8bf60c946"
+    },
+    {
+      "source": "reports/phorge-pr48-50-atomic-decomposition-20261103/source-coverage.csv",
+      "savedPath": "_local_deployment_20261105/reports/source-coverage.csv",
+      "sha256": "a97f4281159e138d90c807acef62e2b7c7fe19890a523849322b37d04fdcc43e"
+    },
+    {
+      "source": "reports/phorge-pr48-50-atomic-decomposition-20261103/review-ledger.json",
+      "savedPath": "_local_deployment_20261105/reports/review-ledger.json",
+      "sha256": "7f8a481b37db707ce00f497f8b193bd9dd4d84cb3bae2d53d2fd0be62066bb91"
+    },
+    {
+      "source": "reports/phorge-pr48-50-atomic-decomposition-20261103/validation.json",
+      "savedPath": "_local_deployment_20261105/reports/validation.json",
+      "sha256": "3d80bbc7c63e112613c8e549b950cd52a46b50e639f8cbcfb52b1cf9d7d5beeb"
+    },
+    {
+      "source": "reports/phorge-pr48-50-atomic-decomposition-20261103/build_report.py",
+      "savedPath": "_local_deployment_20261105/reports/build_report.py",
+      "sha256": "d439d9ed860c590993e0c18edd143686e02c1057df23306b4ce16b82751cca49"
+    }
+  ],
+  "privateDataIncluded": false
+}

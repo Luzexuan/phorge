@@ -1,0 +1,78 @@
+--- a/src/applications/project/controller/PhabricatorProjectListController.php
++++ b/src/applications/project/controller/PhabricatorProjectListController.php
+@@ -8,13 +8,35 @@
+   }
+ 
+   public function handleRequest(AphrontRequest $request) {
+-    return id(new PhabricatorProjectSearchEngine())
+-      ->setController($this)
+-      ->buildResponse();
++    $query_key = $request->getURIData('queryKey');
++    $query_data = array_diff_key(
++      $request->getPassthroughRequestData(),
++      array_fuse(array('before', 'after', 'nux', 'overheated')));
++
++    // The application entry is the project directory, including for users
++    // with an old pinned flat query. Explicit searches and form submissions
++    // retain the normal search engine behavior.
++    if (!$query_key && !$query_data && !$request->isFormPost()) {
++      $query_key = 'hierarchy';
++    }
++
++    $engine = id(new PhabricatorProjectSearchEngine())
++      ->setController($this);
++    $search = id(new PhabricatorApplicationSearchController())
++      ->setSearchEngine($engine)
++      ->setQueryKey($query_key);
++
++    return $this->delegateToController($search);
+   }
+ 
+   protected function buildApplicationCrumbs() {
+     $crumbs = parent::buildApplicationCrumbs();
++
++    $crumbs->addAction(
++      id(new PHUIListItemView())
++        ->setName(pht('项目层级'))
++        ->setIcon('fa-sitemap')
++        ->setHref('/project/query/hierarchy/'));
+ 
+     id(new PhabricatorProjectEditEngine())
+       ->setViewer($this->getViewer())
+--- a/src/applications/project/query/PhabricatorProjectSearchEngine.php
++++ b/src/applications/project/query/PhabricatorProjectSearchEngine.php
+@@ -226,7 +226,9 @@
+   }
+ 
+   protected function getBuiltinQueryNames() {
+-    $names = array();
++    $names = array(
++      'hierarchy' => pht('项目层级'),
++    );
+ 
+     if ($this->requireViewer()->isLoggedIn()) {
+       $names['joined'] = pht('Joined');
+@@ -254,6 +256,14 @@
+     $active = PhabricatorProjectStatus::STATUS_ACTIVE_KEY;
+ 
+     switch ($query_key) {
++      case 'hierarchy':
++        // Paginate roots, not a flat mix of roots and descendants. Children
++        // are loaded separately, with the viewer's policy, at each level.
++        // Include archived roots so their active children remain reachable.
++        return $query
++          ->setParameter('isRoot', true)
++          ->setParameter('status', 'all')
++          ->setParameter('order', 'name');
+       case 'all':
+         return $query;
+       case 'active':
+@@ -344,6 +354,8 @@
+     $list = id(new PhabricatorProjectListView())
+       ->setViewer($viewer)
+       ->setProjects($projects)
++      ->setBrowseHierarchy($query->getQueryKey() === 'hierarchy')
++      ->setShowHierarchyPath(true)
+       ->setShowWatching(true)
+       ->setShowMember(true)
+       ->renderList();

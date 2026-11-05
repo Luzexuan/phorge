@@ -1,0 +1,65 @@
+{
+  "passed": true,
+  "errors": [],
+  "warnings": [
+    {
+      "dependency_cycles": [
+        [
+          "48-ROLE-001",
+          "48-BND-001",
+          "48-ROLE-001"
+        ]
+      ],
+      "meaning": "存在互依行为；须作为共同安全单元审查，不得声称可任意独立部署"
+    }
+  ],
+  "summary": {
+    "atoms": 532,
+    "per_pr": {
+      "48": 219,
+      "49": 135,
+      "50": 178
+    },
+    "per_package": {
+      "D01": 9,
+      "D02": 8,
+      "D03": 21,
+      "D04": 22,
+      "D05": 79,
+      "D06": 44,
+      "D07": 16,
+      "D08": 81,
+      "D09": 101,
+      "D10": 19,
+      "D11": 0,
+      "D12": 0,
+      "D13": 14,
+      "D14": 10,
+      "D15": 34,
+      "D16": 43,
+      "D17": 28,
+      "D18": 3,
+      "D19": 0
+    },
+    "kinds": {
+      "定义": 9,
+      "行为": 297,
+      "约束": 105,
+      "兼容": 43,
+      "控制": 43,
+      "协议": 21,
+      "工程支撑": 14
+    },
+    "source_statuses": {
+      "源PR已实现": 523,
+      "源PR仅客户端合同": 9
+    },
+    "safe_units": 21,
+    "source_file_occurrences": 83,
+    "reference_parents": 134,
+    "mapped_reference_parents": 125,
+    "directly_decomposed_reference_parents": 115,
+    "review_records": 4,
+    "test_execution": "本轮未执行Phorge/生产测试；本表为拆分、来源核对和验收设计"
+  }
+}

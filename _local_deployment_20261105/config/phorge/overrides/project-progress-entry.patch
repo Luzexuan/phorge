@@ -1,0 +1,532 @@
+--- a/src/applications/project/application/PhabricatorProjectApplication.php
++++ b/src/applications/project/application/PhabricatorProjectApplication.php
+@@ -55,6 +55,8 @@
+           => 'PhabricatorProjectMembersRemoveController',
+         'profile/(?P<id>[1-9]\d*)/'
+           => 'PhabricatorProjectProfileController',
++        'progress/(?P<id>[1-9]\d*)/'
++          => 'TeamProjectProgressController',
+         'view/(?P<id>[1-9]\d*)/'
+           => 'PhabricatorProjectViewController',
+         'picture/(?P<id>[1-9]\d*)/'
+--- a/src/applications/project/controller/PhabricatorProjectController.php
++++ b/src/applications/project/controller/PhabricatorProjectController.php
+@@ -116,10 +116,41 @@
+ 
+     $project = $this->getProject();
+     if ($project) {
++      // Use the project hierarchy rather than browser history. This also
++      // works when a user opens a project through a bookmark or a search.
++      $parent = $this->getProjectNavigationParent();
++      $parent_uri = '/project/query/hierarchy/';
++      $parent_name = pht('返回项目列表');
++      if ($parent && PhabricatorPolicyFilter::hasCapability(
++          $this->getViewer(),
++          $parent,
++          PhabricatorPolicyCapability::CAN_VIEW)) {
++        $parent_uri = $this->getApplicationURI(
++          'subprojects/'.$parent->getID().'/');
++        $parent_name = pht('返回上一级');
++      }
++
++      $crumbs->addAction(
++        id(new PHUIListItemView())
++          ->setName($parent_name)
++          ->setIcon('fa-arrow-left')
++          ->setHref($parent_uri)
++          ->setMetadata(array('tip' => $parent_name))
++          ->addClass('team-project-parent-navigation'));
++
+       $ancestors = $project->getAncestorProjects();
+       $ancestors = array_reverse($ancestors);
+-      $ancestors[] = $project;
++      if ($this->shouldAddCurrentProjectCrumb()) {
++        $ancestors[] = $project;
++      }
+       foreach ($ancestors as $ancestor) {
++        if (!PhabricatorPolicyFilter::hasCapability(
++            $this->getViewer(),
++            $ancestor,
++            PhabricatorPolicyCapability::CAN_VIEW)) {
++          continue;
++        }
++
+         if ($ancestor->getPHID() === $project->getPHID()) {
+           // Link the current project's crumb to its profile no matter what,
+           // since we're already on the right context page for it and linking
+@@ -136,7 +167,8 @@
+               break;
+             case 'profile':
+             default:
+-              $crumb_uri = $ancestor->getProfileURI();
++              $crumb_uri = $this->getApplicationURI(
++                'subprojects/'.$ancestor->getID().'/');
+               break;
+           }
+         }
+@@ -146,6 +178,15 @@
+     }
+ 
+     return $crumbs;
++  }
++
++  protected function getProjectNavigationParent() {
++    $project = $this->getProject();
++    return $project ? $project->getParentProject() : null;
++  }
++
++  protected function shouldAddCurrentProjectCrumb() {
++    return true;
+   }
+ 
+   protected function getProfileMenuEngine() {
+--- a/src/applications/project/view/PhabricatorProjectListView.php
++++ b/src/applications/project/view/PhabricatorProjectListView.php
+@@ -6,6 +6,18 @@
+   private $showMember;
+   private $showWatching;
+   private $noDataString;
++  private $browseHierarchy;
++  private $showHierarchyPath;
++
++  public function setBrowseHierarchy($browse) {
++    $this->browseHierarchy = $browse;
++    return $this;
++  }
++
++  public function setShowHierarchyPath($show) {
++    $this->showHierarchyPath = $show;
++    return $this;
++  }
+ 
+   public function setProjects(array $projects) {
+     $this->projects = $projects;
+@@ -36,8 +48,6 @@
+     $viewer_phid = $viewer->getPHID();
+     $projects = $this->getProjects();
+ 
+-    $handles = $viewer->loadHandles(mpull($projects, 'getPHID'));
+-
+     $no_data = pht('No projects found.');
+     if ($this->noDataString) {
+       $no_data = $this->noDataString;
+@@ -56,10 +66,15 @@
+ 
+       $icon_name = $project->getDisplayIconName();
+ 
++      $href = "/project/view/{$id}/";
++      if ($this->browseHierarchy && $project->getHasSubprojects()) {
++        $href = "/project/subprojects/{$id}/";
++      }
++
+       $item = id(new PHUIObjectItemView())
+         ->setObject($project)
+         ->setHeader($project->getName())
+-        ->setHref("/project/view/{$id}/")
++        ->setHref($href)
+         ->setImageURI($project->getProfileImageURI())
+         ->addAttribute(
+           array(
+@@ -67,6 +82,45 @@
+             ' ',
+             $icon_name,
+           ));
++
++      if ($this->showHierarchyPath) {
++        $path = array();
++        foreach (array_reverse($project->getAncestorProjects()) as $ancestor) {
++          // Project queries attach ancestors for policy evaluation. Check
++          // visibility before rendering their names into search results.
++          if (!PhabricatorPolicyFilter::hasCapability(
++            $viewer, $ancestor, PhabricatorPolicyCapability::CAN_VIEW)) {
++            $path = array(pht('受限父项目'));
++            continue;
++          }
++          $path[] = phutil_tag(
++            'a',
++            array('href' => '/project/subprojects/'.$ancestor->getID().'/'),
++            $ancestor->getName());
++        }
++        $item->addAttribute($path
++          ? phutil_implode_html(' / ', $path)
++          : pht('顶级项目'));
++      }
++
++      if ($project->supportsSubprojects()) {
++        $item->addAttribute(phutil_tag(
++          'a',
++          array('href' => "/project/subprojects/{$id}/"),
++          pht('浏览子项目')));
++      }
++
++      $item->addAttribute(phutil_tag(
++        'a',
++        array('href' => "/project/progress/{$id}/"),
++        pht('开发历史')));
++
++      if ($this->browseHierarchy && $project->getHasSubprojects()) {
++        $item->addAttribute(phutil_tag(
++          'a',
++          array('href' => $project->getProfileURI()),
++          pht('项目概况')));
++      }
+ 
+       if ($project->getStatus() == PhabricatorProjectStatus::STATUS_ARCHIVED) {
+         $item->addIcon('fa-ban', pht('Archived'));
+--- a/src/applications/project/controller/PhabricatorProjectProfileController.php
++++ b/src/applications/project/controller/PhabricatorProjectProfileController.php
+@@ -47,6 +47,10 @@
+ 
+     $properties = $this->buildPropertyListView($project);
+ 
++    $progress = id(new TeamProjectProgressSummaryView())
++      ->setViewer($viewer)
++      ->setProject($project);
++
+     $watch_action = $this->renderWatchAction($project);
+     $header->addActionLink($watch_action);
+ 
+@@ -129,6 +133,7 @@
+       ->addClass('project-view-people-home')
+       ->setMainColumn(
+         array(
++          $progress,
+           $properties,
+           $feed,
+         ))
+--- a/src/applications/project/engine/PhabricatorProjectProfileMenuEngine.php
++++ b/src/applications/project/engine/PhabricatorProjectProfileMenuEngine.php
+@@ -17,6 +17,19 @@
+     return "/project/{$id}/item/{$path}";
+   }
+ 
++  public function getDefaultMenuItemConfiguration() {
++    $default = parent::getDefaultMenuItemConfiguration();
++    if (!$default && PhabricatorApplication::isClassInstalledForViewer(
++        PhabricatorManiphestApplication::class, $this->getViewer())) {
++      // A stored default may point at the retired standalone node entry.
++      // Resolve it to the unified workspace without rewriting menu records.
++      return $this->newItem()
++        ->setBuiltinKey(PhabricatorProject::ITEM_WORKBOARD)
++        ->setMenuItemKey(PhabricatorProjectWorkboardProfileMenuItem::MENUITEMKEY);
++    }
++    return $default;
++  }
++
+   protected function getBuiltinProfileItems($object) {
+     $items = array();
+ 
+@@ -28,6 +41,10 @@
+     $items[] = $this->newItem()
+       ->setBuiltinKey(PhabricatorProject::ITEM_PROFILE)
+       ->setMenuItemKey(PhabricatorProjectDetailsProfileMenuItem::MENUITEMKEY);
++
++    $items[] = $this->newItem()
++      ->setBuiltinKey(TeamProjectProgressProfileMenuItem::BUILTINKEY)
++      ->setMenuItemKey(TeamProjectProgressProfileMenuItem::MENUITEMKEY);
+ 
+     $items[] = $this->newItem()
+       ->setBuiltinKey(PhabricatorProject::ITEM_POINTS)
+--- a/src/applications/project/controller/PhabricatorProjectSubprojectsController.php
++++ b/src/applications/project/controller/PhabricatorProjectSubprojectsController.php
+@@ -29,6 +29,7 @@
+         ->withParentProjectPHIDs(array($project->getPHID()))
+         ->needImages(true)
+         ->withIsMilestone(false)
++        ->setOrderVector(array('name'))
+         ->execute();
+ 
+       $subproject_list = id(new PHUIObjectBoxView())
+@@ -38,7 +39,8 @@
+           id(new PhabricatorProjectListView())
+             ->setViewer($viewer)
+             ->setProjects($subprojects)
+-            ->setNoDataString(pht('This project has no subprojects.'))
++            ->setBrowseHierarchy(true)
++            ->setNoDataString(pht('没有可查看的子项目。'))
+             ->renderList());
+     } else {
+       $subprojects = array();
+@@ -60,7 +62,7 @@
+           id(new PhabricatorProjectListView())
+             ->setViewer($viewer)
+             ->setProjects($milestones)
+-            ->setNoDataString(pht('This project has no milestones.'))
++            ->setNoDataString(pht('没有可查看的里程碑。'))
+             ->renderList());
+     } else {
+       $milestones = array();
+@@ -100,6 +102,16 @@
+       ->addClass('project-view-home')
+       ->addClass('project-view-people-home')
+       ->setMainColumn(array(
++          id(new PHUIInfoView())
++            ->setSeverity(PHUIInfoView::SEVERITY_NOTICE)
++            ->appendChild(array(
++              pht('这里的里程碑用于组织阶段任务。要记录验收、发布或阶段成果，请到'),
++              phutil_tag('a',
++                array('href' => '/project/progress/'.$project->getID().
++                  '/?compose=node#publish'),
++                pht('开发历史 → 发布项目记录')),
++              pht('，保留时间、参与者和具体成果。'),
++            )),
+           $info_view,
+           $subproject_list,
+           $milestone_list,
+@@ -134,17 +146,9 @@
+ 
+     $can_subproject = ($can_create && $can_edit && $allows_subprojects);
+ 
+-    // If we're offering to create the first subproject, we're going to warn
+-    // the user about the effects before moving forward.
+-    if ($can_subproject && !$subprojects) {
+-      $subproject_href = "/project/warning/{$id}/";
+-      $subproject_disabled = false;
+-      $subproject_workflow = true;
+-    } else {
+-      $subproject_href = "/project/edit/?parent={$id}";
+-      $subproject_disabled = !$can_subproject;
+-      $subproject_workflow = !$can_subproject;
+-    }
++    $subproject_href = "/project/edit/?parent={$id}";
++    $subproject_disabled = !$can_subproject;
++    $subproject_workflow = !$can_subproject;
+ 
+     $curtain->addAction(
+       id(new PhabricatorActionView())
+--- a/src/applications/project/controller/PhabricatorProjectBoardViewController.php
++++ b/src/applications/project/controller/PhabricatorProjectBoardViewController.php
+@@ -98,7 +98,11 @@
+           ))
+         ->setNavigation($nav)
+         ->setCrumbs($crumbs)
+-        ->appendChild($content);
++        ->appendChild(array(
++          id(new TeamProjectWorkspaceView())
++            ->setViewer($viewer)->setProject($project),
++          $content,
++        ));
+     }
+ 
+     $tasks = $state->getObjects();
+@@ -110,7 +114,7 @@
+ 
+     $board_id = celerity_generate_unique_node_id();
+ 
+-    $board = id(new PHUIWorkboardView())
++    $board = id(new TeamProjectWorkspaceBoardView())
+       ->setViewer($viewer)
+       ->setID($board_id)
+       ->addSigil('jx-workboard')
+@@ -368,8 +372,6 @@
+     $crumbs->addTextCrumb(pht('Workboard'));
+     $crumbs->setBorder(true);
+ 
+-    $crumbs->addAction($sort_menu);
+-    $crumbs->addAction($filter_menu);
+     $crumbs->addAction($divider);
+     $crumbs->addAction($manage_menu);
+     $crumbs->addAction($fullscreen);
+@@ -390,6 +392,9 @@
+         ))
+       ->appendChild(
+         array(
++          id(new TeamProjectWorkspaceView())
++            ->setViewer($viewer)->setProject($project)
++            ->addBoardControl($sort_menu)->addBoardControl($filter_menu),
+           $board_box,
+         ));
+ 
+@@ -419,6 +424,16 @@
+     $state = $this->getViewState();
+     $base_uri = $state->newWorkboardURI();
+ 
++    $ordering_names = array(
++      'natural' => '看板顺序',
++      'priority' => '按优先级',
++      'owner' => '按负责人',
++      'status' => '按状态',
++      'title' => '按标题',
++      'created' => '按发布时间',
++      'author' => '按发布成员',
++      'points' => '按点数',
++    );
+     $items = array();
+     foreach ($ordering_map as $key => $ordering) {
+       // TODO: It would be desirable to build a real "PHUIIconView" here, but
+@@ -426,7 +441,7 @@
+       // being fairly complex, since some callers read the icon out of other
+       // views. For now, just stick with a string.
+       $ordering_icon = $ordering->getMenuIconIcon();
+-      $ordering_name = $ordering->getDisplayName();
++      $ordering_name = idx($ordering_names, $key, $ordering->getDisplayName());
+ 
+       $is_selected = ($key === $sort_key);
+       if ($is_selected) {
+@@ -469,9 +484,10 @@
+     }
+ 
+     $sort_button = id(new PHUIListItemView())
+-      ->setName($active_name)
++      ->setName('排序：'.$active_name)
+       ->setIcon($active_icon)
+       ->setHref('#')
++      ->addClass('team-project-board-sort')
+       ->addSigil('boards-dropdown-menu')
+       ->setMetadata(
+         array(
+@@ -494,16 +510,16 @@
+     $state = $this->getViewState();
+ 
+     $named = array(
+-      'open' => pht('Open Tasks'),
+-      'all' => pht('All Tasks'),
++      'open' => '未完成卡片',
++      'all' => '全部卡片',
+     );
+ 
+     if ($viewer->isLoggedIn()) {
+-      $named['assigned'] = pht('Assigned to Me');
++      $named['assigned'] = '分配给我';
+     }
+ 
+     if ($custom_query) {
+-      $named[$custom_query->getQueryKey()] = pht('Custom Filter');
++      $named[$custom_query->getQueryKey()] = '自定义筛选';
+     }
+ 
+     $items = array();
+@@ -573,9 +589,10 @@
+     }
+ 
+     $filter_button = id(new PHUIListItemView())
+-      ->setName($active_filter)
++      ->setName('筛选：'.$active_filter)
+       ->setIcon('fa-search')
+       ->setHref('#')
++      ->addClass('team-project-board-filter')
+       ->addSigil('boards-dropdown-menu')
+       ->setMetadata(
+         array(
+@@ -738,7 +755,9 @@
+ 
+       $column_items[] = id(new PhabricatorActionView())
+         ->setIcon($spec['icon'])
+-        ->setName($spec['name'])
++        ->setName(count($specs) > 1
++          ? pht('在此列新建卡片：%s', $spec['name'])
++          : pht('在此列新建卡片'))
+         ->setHref($spec_href)
+         ->setDisabled($spec['disabled'])
+         ->addSigil('column-add-task')
+--- a/src/applications/maniphest/editor/ManiphestEditEngine.php
++++ b/src/applications/maniphest/editor/ManiphestEditEngine.php
+@@ -30,11 +30,50 @@
+   }
+ 
+   protected function newEditableObject() {
++    $controller = $this->getController();
++    if ($controller) {
++      $this->addContextParameter('projectNode');
++      $entry = $controller->getRequest()->getStr('projectNode', '');
++      if (strlen($entry)) {
++        try {
++          return TeamProjectProgress::newTaskDraft($this->getViewer(), $entry);
++        } catch (InvalidArgumentException $ex) {
++          throw $this->newProjectRecordDraftException();
++        } catch (PhabricatorPolicyException $ex) {
++          throw $this->newProjectRecordDraftException();
++        }
++      }
++    }
+     return ManiphestTask::initializeNewTask($this->getViewer());
++  }
++
++  private function newProjectRecordDraftException() {
++    // Native policy dialogs use these fields, rather than Exception::message.
++    return id(new PhabricatorPolicyException('无法从项目记录创建卡片。'))
++      ->setTitle('无法从项目记录创建卡片')
++      ->setRejection('来源记录无效、不可查看，或您没有该项目的编辑权限。');
+   }
+ 
+   protected function newObjectQuery() {
+     return id(new ManiphestTaskQuery());
++  }
++
++  protected function willBuildEditForm($object, array $fields) {
++    $fields = parent::willBuildEditForm($object, $fields);
++    $request = $this->getController()->getRequest();
++    if ($this->getIsCreate() && !$request->isHTTPPost() &&
++        strlen($request->getStr('projectNode', ''))) {
++      // The native project extension initializes all unsaved objects with an
++      // empty project field. Restore the already-authorized draft's initial
++      // value after that initialization. Submitted or locked fields retain
++      // their native behavior and all saves still use native transactions.
++      foreach ($fields as $field) {
++        if ($field->getKey() === 'projectPHIDs' && !$field->getIsLocked()) {
++          $field->setValue($object->getProjectPHIDs());
++        }
++      }
++    }
++    return $fields;
+   }
+ 
+   protected function getObjectCreateTitleText($object) {
+--- a/src/applications/maniphest/config/PhabricatorManiphestConfigOptions.php
++++ b/src/applications/maniphest/config/PhabricatorManiphestConfigOptions.php
+@@ -67,7 +67,7 @@
+     $status_type = 'maniphest.statuses';
+     $status_defaults = array(
+       'open' => array(
+-        'name' => pht('Open'),
++        'name' => pht('待完成'),
+         'special' => ManiphestTaskStatus::SPECIAL_DEFAULT,
+         'prefixes' => array(
+           'open',
+@@ -76,9 +76,20 @@
+           'reopens',
+         ),
+       ),
++      // Shared work-card lifecycle. Existing native status keys remain valid.
++      'active' => array(
++        'name' => pht('进行中'),
++        'transaction.icon' => 'fa-play-circle',
++        'transaction.color' => 'blue',
++      ),
++      'blocked' => array(
++        'name' => pht('有阻碍'),
++        'transaction.icon' => 'fa-pause-circle',
++        'transaction.color' => 'red',
++      ),
+       'resolved' => array(
+-        'name' => pht('Resolved'),
+-        'name.full' => pht('Closed, Resolved'),
++        'name' => pht('已完成'),
++        'name.full' => pht('已完成'),
+         'closed' => true,
+         'special' => ManiphestTaskStatus::SPECIAL_CLOSED,
+         'transaction.icon' => 'fa-check-circle',
+--- a/src/applications/project/view/ProjectBoardTaskCard.php
++++ b/src/applications/project/view/ProjectBoardTaskCard.php
+@@ -98,6 +98,21 @@
+       ->addSigil('project-card')
+       ->setDisabled($task->isClosed())
+       ->setBarColor($bar_color);
++
++    // Every index displays the same task state; AJAX reload uses this renderer.
++    $status = $task->getStatus();
++    $status_colors = array(
++      'open' => PHUITagView::COLOR_GREY,
++      'active' => PHUITagView::COLOR_BLUE,
++      'blocked' => PHUITagView::COLOR_RED,
++      'resolved' => PHUITagView::COLOR_GREEN,
++    );
++    $card->addAttribute(id(new PHUITagView())
++      ->setType(PHUITagView::TYPE_SHADE)
++      ->setSlimShady(true)
++      ->setColor(idx($status_colors, $status, PHUITagView::COLOR_GREY))
++      ->setName(ManiphestTaskStatus::getTaskStatusName($status))
++      ->addClass('team-project-card-status'));
+ 
+     if ($this->getShowEditControls()) {
+       if ($can_edit) {

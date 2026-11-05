@@ -1,0 +1,47 @@
+# Acceptance-only delivery: real Herald challenge + real herald-smtp protocol,
+# ending in a private local capture instead of any external recipient mailbox.
+services:
+  identity-test-mail:
+    image: python:3.13-alpine@sha256:bf12ecc0bea3f171d55145dd02c78b5eeb09f30ee2ac9cc2b4c9e4e8f5e30741
+    restart: unless-stopped
+    command: [python, /app/mail_server.py]
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 96m
+    cpus: 0.5
+    pids_limit: 64
+    volumes:
+      - ./config/testing/mail_server.py:/app/mail_server.py:ro
+      - ./config/testing/tls:/tls:ro
+      - ./state/testing-mail:/mail
+    networks: [auth, smtp-testing]
+    healthcheck:
+      test: [CMD, python, -c, "import ssl,urllib.request; urllib.request.urlopen('https://identity-test-mail:8443/healthz',context=ssl.create_default_context(cafile='/tls/ca.crt'),timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: json-file
+      options: {max-size: 5m, max-file: '2'}
+  herald:
+    environment:
+      HERALD_SMTP_API_URL: https://identity-test-mail:8443
+      SSL_CERT_FILE: /etc/acceptance-provider-ca.crt
+    volumes:
+      - ./config/testing/tls/ca.crt:/etc/acceptance-provider-ca.crt:ro
+    depends_on:
+      identity-test-mail:
+        condition: service_healthy
+  herald-smtp:
+    environment:
+      SMTP_HOST: identity-test-mail
+      SMTP_PORT: '1025'
+      SMTP_FROM: no-reply@acceptance.test
+      SMTP_FROM_NAME: Team acceptance tests
+      SMTP_USE_TLS: 'false'
+      SMTP_USE_STARTTLS: 'false'
+    networks: [smtp-testing]
+networks:
+  smtp-testing:
+    internal: true

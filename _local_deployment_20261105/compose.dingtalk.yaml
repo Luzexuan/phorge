@@ -1,0 +1,86 @@
+# Opt-in only: scripts/compose.sh does NOT include this overlay by default.
+# Prepare TLS and .env.dingtalk, then explicitly use scripts/compose-dingtalk.sh.
+services:
+  stargate:
+    environment:
+      LOGIN_EMAIL_ENABLED: 'false'
+      LOGIN_SMS_ENABLED: 'false'
+      DINGTALK_LOGIN_READY: 'true'
+      LOGIN_PAGE_TITLE: '账号密码与钉钉验证码登录'
+      LOGIN_PAGE_FOOTER_TEXT: '使用已审批账户的密码，或在本人钉钉工作通知中接收验证码。'
+  warden:
+    environment:
+      RESPONSE_FIELDS: phone,mail,user_id,status,scope,role,name,dingtalk_userid
+  herald-dingtalk:
+    image: team-management/herald-dingtalk:f03650d-mobile-post-redacted
+    pull_policy: never
+    build:
+      context: ./vendor/herald-dingtalk
+      dockerfile: ../../docker/identity.Dockerfile
+      args:
+        GOTOOLCHAIN: go1.27.3
+        VERSION: v1.2.5-mobile-post-redacted
+        COMMIT: f03650d66779c1021e80d70d6f23a8ed1fc77d06
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 128m
+    cpus: 0.5
+    pids_limit: 64
+    environment:
+      PORT: '8083'
+      API_KEY: ${DINGTALK_PROVIDER_API_KEY:?prepare .env.dingtalk}
+      DINGTALK_APP_KEY: ${DINGTALK_APP_KEY:?DingTalk AppKey is required}
+      DINGTALK_APP_SECRET: ${DINGTALK_APP_SECRET:?DingTalk AppSecret is required}
+      DINGTALK_AGENT_ID: ${DINGTALK_AGENT_ID:?DingTalk AgentId is required}
+      DINGTALK_LOOKUP_MODE: mobile
+      LOG_LEVEL: warn
+    networks: [dingtalk-provider, dingtalk-egress]
+    healthcheck:
+      test: [CMD, wget, -q, -O, /dev/null, http://127.0.0.1:8083/readyz]
+      interval: 15s
+      timeout: 3s
+      retries: 5
+    logging:
+      driver: json-file
+      options: {max-size: 5m, max-file: '2'}
+  dingtalk-tls:
+    image: python:3.13-alpine@sha256:bf12ecc0bea3f171d55145dd02c78b5eeb09f30ee2ac9cc2b4c9e4e8f5e30741
+    restart: unless-stopped
+    command: [python, /app/tls_proxy.py]
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 64m
+    cpus: 0.25
+    pids_limit: 32
+    volumes:
+      - ./config/dingtalk/tls_proxy.py:/app/tls_proxy.py:ro
+      - ./config/dingtalk/tls:/tls:ro
+    networks: [auth, dingtalk-provider]
+    depends_on:
+      herald-dingtalk:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, python, -c, "import ssl,urllib.request; urllib.request.urlopen('https://dingtalk-tls:8443/readyz',context=ssl.create_default_context(cafile='/tls/ca.crt'),timeout=3)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: json-file
+      options: {max-size: 5m, max-file: '2'}
+  herald:
+    environment:
+      HERALD_DINGTALK_API_URL: https://dingtalk-tls:8443
+      HERALD_DINGTALK_API_KEY: ${DINGTALK_PROVIDER_API_KEY:?prepare .env.dingtalk}
+      SSL_CERT_FILE: /etc/dingtalk-provider-ca-bundle.crt
+    volumes:
+      - ./config/dingtalk/tls/ca-bundle.crt:/etc/dingtalk-provider-ca-bundle.crt:ro
+    depends_on:
+      dingtalk-tls:
+        condition: service_healthy
+networks:
+  dingtalk-provider:
+    internal: true
+  dingtalk-egress: {}

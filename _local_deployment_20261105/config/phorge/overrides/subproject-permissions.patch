@@ -1,0 +1,806 @@
+--- a/src/applications/project/storage/PhabricatorProject.php
++++ b/src/applications/project/storage/PhabricatorProject.php
+@@ -94,6 +94,7 @@
+ 
+     return id(new self())
+       ->setAuthorPHID($actor->getPHID())
++      ->setProperty(TeamProjectMembership::ROLES_PROPERTY, array($actor->getPHID() => 'admin'))
+       ->setIcon($default_icon)
+       ->setColor($default_color)
+       ->setViewPolicy($view_policy)
+@@ -143,6 +144,12 @@
+ 
+     $can_edit = PhabricatorPolicyCapability::CAN_EDIT;
+ 
++    if (($capability === PhabricatorPolicyCapability::CAN_VIEW &&
++          TeamProjectMembership::hasAutomaticViewRole($this, $viewer)) ||
++        ($capability === $can_edit && TeamProjectMembership::isAutomaticRole($this, $viewer))) {
++      return true;
++    }
++
+     switch ($capability) {
+       case PhabricatorPolicyCapability::CAN_VIEW:
+         $viewer_phid = $viewer->getPHID();
+@@ -151,18 +158,8 @@
+           return true;
+         }
+         break;
+-      case PhabricatorPolicyCapability::CAN_EDIT:
+-        $parent = $this->getParentProject();
+-        if ($parent) {
+-          $can_edit_parent = PhabricatorPolicyFilter::hasCapability(
+-            $viewer,
+-            $parent,
+-            $can_edit);
+-          if ($can_edit_parent) {
+-            return true;
+-          }
+-        }
+-        break;
++      // Subprojects use their own edit policy. Editing a parent does not
++      // implicitly grant editing (or joining) of its children.
+       case PhabricatorPolicyCapability::CAN_JOIN:
+         if (PhabricatorPolicyFilter::hasCapability($viewer, $this, $can_edit)) {
+           // Project editors can always join a project.
+@@ -175,6 +172,15 @@
+   }
+ 
+   public function describeAutomaticCapability($capability) {
++
++    if (TeamOrganizationProjectBoundary::newGuard($this)) {
++      switch ($capability) {
++        case PhabricatorPolicyCapability::CAN_VIEW:
++          return pht('项目成员也必须符合团队访问边界，才能查看此项目。');
++        case PhabricatorPolicyCapability::CAN_JOIN:
++          return pht('编辑者符合团队访问边界时可以加入此项目。');
++      }
++    }
+ 
+     // TODO: Clarify the additional rules that parent and subprojects imply.
+ 
+@@ -202,7 +208,26 @@
+         break;
+     }
+ 
++    $boundary = TeamOrganizationProjectBoundary::newGuard($this);
++    if ($boundary) {
++      $extended[] = array($boundary, PhabricatorPolicyCapability::CAN_VIEW);
++    }
++
++    if ($capability === PhabricatorPolicyCapability::CAN_EDIT) {
++      $extended[] = array(new TeamProjectMemberRoleGuard($this), PhabricatorPolicyCapability::CAN_VIEW);
++    }
++
+     return $extended;
++  }
++
++  /** Explicit membership, excluding the members aggregated from descendants. */
++  public function getDirectMemberPHIDs() {
++    if (!$this->getPHID()) {
++      return array();
++    }
++    return PhabricatorEdgeQuery::loadDestinationPHIDs(
++      $this->getPHID(),
++      PhabricatorProjectProjectHasMemberEdgeType::EDGECONST);
+   }
+ 
+   public function isUserMember($user_phid) {
+@@ -527,10 +552,6 @@
+       return false;
+     }
+ 
+-    if ($this->getHasSubprojects()) {
+-      return false;
+-    }
+-
+     return true;
+   }
+ 
+--- a/src/applications/project/editor/PhabricatorProjectTransactionEditor.php
++++ b/src/applications/project/editor/PhabricatorProjectTransactionEditor.php
+@@ -87,25 +87,12 @@
+ 
+     $is_milestone = $this->getIsMilestone();
+ 
+-    $is_parent = $object->getHasSubprojects();
+-
+     foreach ($xactions as $xaction) {
+       switch ($xaction->getTransactionType()) {
+         case PhabricatorTransactions::TYPE_EDGE:
+           $type = $xaction->getMetadataValue('edge:type');
+           if ($type != PhabricatorProjectProjectHasMemberEdgeType::EDGECONST) {
+             break;
+-          }
+-
+-          if ($is_parent) {
+-            $errors[] = new PhabricatorApplicationTransactionValidationError(
+-              $xaction->getTransactionType(),
+-              pht('Invalid'),
+-              pht(
+-                'You can not change members of a project with subprojects '.
+-                'directly. Members of any subproject are automatically '.
+-                'members of the parent project.'),
+-              $xaction);
+           }
+ 
+           if ($is_milestone) {
+@@ -121,6 +108,8 @@
+       }
+     }
+ 
++    TeamProjectMembership::validateTransactions(
++      $this->getActor(), $object, $xactions, $this->getIsNewObject());
+     return $errors;
+   }
+ 
+@@ -230,25 +219,8 @@
+       }
+     }
+ 
+-    if ($new_parent) {
+-      // If we just created the first subproject of this parent, we want to
+-      // copy all of the real members to the subproject.
+-      if (!$new_parent->getHasSubprojects()) {
+-        $member_type = PhabricatorProjectProjectHasMemberEdgeType::EDGECONST;
+-
+-        $project_members = PhabricatorEdgeQuery::loadDestinationPHIDs(
+-          $new_parent->getPHID(),
+-          $member_type);
+-
+-        if ($project_members) {
+-          $editor = new PhabricatorEdgeEditor();
+-          foreach ($project_members as $phid) {
+-            $editor->addEdge($object->getPHID(), $member_type, $phid);
+-          }
+-          $editor->save();
+-        }
+-      }
+-    }
++    // A new subproject keeps only the members explicitly supplied by its
++    // creator. In particular, the first child must not import parent members.
+ 
+     // TODO: We should dump an informational transaction onto the parent
+     // project to show that we created the sub-thing.
+@@ -357,6 +329,11 @@
+ 
+     /** @var PhabricatorProject $copy */
+     $copy = parent::adjustObjectForPolicyChecks($object, $xactions);
++    foreach ($xactions as $xaction) {
++      if ($xaction->getTransactionType() === TeamProjectMemberRoleTransaction::TRANSACTIONTYPE) {
++        $copy->setProperty(TeamProjectMembership::ROLES_PROPERTY, $xaction->getNewValue());
++      }
++    }
+ 
+     $type_edge = PhabricatorTransactions::TYPE_EDGE;
+     $edgetype_member = PhabricatorProjectProjectHasMemberEdgeType::EDGECONST;
+@@ -409,7 +386,7 @@
+             ->withPHIDs(array($object_phid))
+             ->needMembers(true)
+             ->executeOne();
+-          $members = $project->getMemberPHIDs();
++          $members = $project->getDirectMemberPHIDs();
+         } else {
+           $members = array();
+         }
+@@ -417,6 +394,24 @@
+         $clone_xaction = clone $member_xaction;
+         $hint = $this->getPHIDTransactionNewValue($clone_xaction, $members);
+         $hint = array_fuse($hint);
++
++        // Editing direct membership does not remove rights originating in a
++        // descendant. Predict the same union as the membership index does.
++        if ($object_phid && $object->getHasSubprojects()) {
++          $descendants = id(new PhabricatorProjectQuery())
++            ->setViewer(PhabricatorUser::getOmnipotentUser())
++            ->withAncestorProjectPHIDs(array($object_phid))
++            ->withIsMilestone(false)
++            ->execute();
++          if ($descendants) {
++            $edges = id(new PhabricatorEdgeQuery())
++              ->withSourcePHIDs(mpull($descendants, 'getPHID'))
++              ->withEdgeTypes(array($edgetype_member));
++            $edges->execute();
++            $inherited = $edges->getDestinationPHIDs();
++            $hint += array_fuse($inherited);
++          }
++        }
+       }
+     }
+ 
+@@ -457,6 +452,53 @@
+     $this->setIsMilestone($is_milestone);
+     $this->setParentPHID($parent_phid);
+ 
++    $has_role = false;
++    foreach ($results as $xaction) {
++      if ($xaction->getTransactionType() === TeamProjectMemberRoleTransaction::TRANSACTIONTYPE) {
++        $has_role = true;
++      }
++    }
++    if (!$is_milestone && !$has_role) {
++      if ($this->getIsNewObject()) {
++        $results[] = id(new PhabricatorProjectTransaction())
++          ->setTransactionType(TeamProjectMemberRoleTransaction::TRANSACTIONTYPE)
++          ->setNewValue(array($object->getAuthorPHID() => 'admin'));
++      } else {
++        $roles = TeamProjectMembership::roleMap($object);
++        $members = array_fuse($object->getDirectMemberPHIDs());
++        $expected = null;
++        foreach ($results as $xaction) {
++          if ($xaction->getTransactionType() !== PhabricatorTransactions::TYPE_EDGE ||
++              $xaction->getMetadataValue('edge:type') !== PhabricatorProjectProjectHasMemberEdgeType::EDGECONST) {
++            continue;
++          }
++          $spec = $xaction->getNewValue();
++          if (isset($spec['='])) { $members = array_fuse(array_keys($spec['='])); }
++          foreach (idx($spec, '+', array()) as $phid => $value) { $members[$phid] = $phid; }
++          foreach (idx($spec, '-', array()) as $phid => $value) { unset($members[$phid]); }
++          $expected = $xaction->getMetadataValue(TeamProjectMembership::EXPECTED_STATE);
++        }
++        $removed = array_diff($object->getDirectMemberPHIDs(), array_keys($members));
++        $pruned = $roles;
++        foreach ($removed as $phid) {
++          // Leaving and rejoining must not let a read-only member discard
++          // an administrator's explicit edit ceiling.
++          if ($phid === $this->getActor()->getPHID() && idx($roles, $phid) === 'viewer' &&
++              !TeamProjectMembership::canManage($this->getActor(), $object)) {
++            continue;
++          }
++          unset($pruned[$phid]);
++        }
++        ksort($pruned, SORT_STRING); ksort($roles, SORT_STRING);
++        if ($pruned !== $roles) {
++          $results[] = id(new PhabricatorProjectTransaction())
++            ->setTransactionType(TeamProjectMemberRoleTransaction::TRANSACTIONTYPE)
++            ->setMetadataValue(TeamProjectMembership::EXPECTED_STATE, $expected)
++            ->setNewValue($pruned);
++        }
++      }
++    }
++
+     return $results;
+   }
+ 
+--- a/src/applications/project/engineextension/PhabricatorProjectsMembershipIndexEngineExtension.php
++++ b/src/applications/project/engineextension/PhabricatorProjectsMembershipIndexEngineExtension.php
+@@ -47,12 +47,13 @@
+         ->setViewer($this->getViewer())
+         ->withAncestorProjectPHIDs(array($project->getPHID()))
+         ->withIsMilestone(false)
+-        ->withHasSubprojects(false)
+         ->execute();
+       $descendant_phids = mpull($descendants, 'getPHID');
+ 
+       if ($descendant_phids) {
+-        $source_phids = $descendant_phids;
++        // Retain explicit members of this project and every intermediate
++        // descendant. Creating a child must never evict parent members.
++        $source_phids = array_merge(array($project_phid), $descendant_phids);
+         $has_subprojects = true;
+       } else {
+         $source_phids = array($project->getPHID());
+--- a/src/applications/project/engine/PhabricatorProjectEditEngine.php
++++ b/src/applications/project/engine/PhabricatorProjectEditEngine.php
+@@ -121,6 +121,18 @@
+       PhabricatorProjectColorTransaction::TRANSACTIONTYPE,
+     );
+     $unavailable = array_fuse($unavailable);
++
++    // Editing project content and administering its access are separate roles.
++    if ($object->getID() && !TeamProjectMembership::canManage($this->getViewer(), $object)) {
++      foreach ($fields as $field) {
++        if (in_array($field->getTransactionType(), array(
++          PhabricatorTransactions::TYPE_VIEW_POLICY,
++          PhabricatorTransactions::TYPE_EDIT_POLICY,
++          PhabricatorTransactions::TYPE_JOIN_POLICY), true)) {
++          $field->setIsLocked(true);
++        }
++      }
++    }
+ 
+     if ($is_milestone) {
+       foreach ($fields as $key => $field) {
+@@ -323,9 +335,7 @@
+         ->setValue($slugs),
+     );
+ 
+-    $can_edit_members = (!$milestone) &&
+-                        (!$object->isMilestone()) &&
+-                        (!$object->getHasSubprojects());
++    $can_edit_members = (!$milestone) && (!$object->isMilestone());
+ 
+     if ($can_edit_members) {
+ 
+@@ -333,10 +343,11 @@
+       // one. It is always available via Conduit.
+       $show_field = (bool)$this->getIsCreate();
+ 
+-      $members_field = id(new PhabricatorUsersEditField())
++      $members_field = id(new TeamProjectMembersEditField())
+         ->setKey('members')
+         ->setAliases(array('memberPHIDs'))
+-        ->setLabel(pht('Initial Members'))
++        ->setLabel(pht('初始成员'))
++        ->setControlInstructions(pht('可搜索人员、团队或项目，批量导入所选来源本级的当前有效成员，最多 500 人。不包含下级；仅一次性添加成员，不同步后续变化，也不授予编辑或管理权限。'))
+         ->setIsFormField($show_field)
+         ->setUseEdgeTransactions(true)
+         ->setTransactionType(PhabricatorTransactions::TYPE_EDGE)
+--- a/src/applications/project/controller/PhabricatorProjectMembersAddController.php
++++ b/src/applications/project/controller/PhabricatorProjectMembersAddController.php
+@@ -1,82 +1,40 @@
+ <?php
+ 
+-final class PhabricatorProjectMembersAddController
+-  extends PhabricatorProjectController {
+-
++final class PhabricatorProjectMembersAddController extends PhabricatorProjectController {
+   public function handleRequest(AphrontRequest $request) {
+-    $viewer = $request->getViewer();
+-    $id = $request->getURIData('id');
+-
+-    $project = id(new PhabricatorProjectQuery())
+-      ->setViewer($viewer)
+-      ->withIDs(array($id))
+-      ->requireCapabilities(
+-        array(
+-          PhabricatorPolicyCapability::CAN_VIEW,
+-          PhabricatorPolicyCapability::CAN_EDIT,
+-        ))
+-      ->executeOne();
+-    if (!$project) {
+-      return new Aphront404Response();
++    if ($request->isHTTPPost()) {
++      try { $request->validateCSRF(); }
++      catch (AphrontMalformedRequestException $ex) { return new Aphront400Response(); }
+     }
+-
+-    $this->setProject($project);
+-    $done_uri = "/project/members/{$id}/";
+-
++    $viewer = $request->getViewer(); $id = $request->getURIData('id');
++    $project = TeamProjectAccessService::loadProject($viewer, $id);
++    if (!$project) { return new Aphront404Response(); }
++    if (!TeamProjectMembership::canManage($viewer, $project)) { return new Aphront403Response(); }
++    $this->setProject($project); $done_uri = '/project/members/'.$id.'/';
+     if (!$project->supportsEditMembers()) {
+-      $copy = pht('Parent projects and milestones do not support adding '.
+-        'members. You can add members directly to any non-parent subproject.');
+-
+-      $subprojects_uri = "/project/subprojects/{$id}/";
+-
+-      return $this->newDialog()
+-        ->setTitle(pht('Unsupported Project'))
+-        ->appendParagraph($copy)
+-        ->setSubmitURI($subprojects_uri)
+-        ->addSubmitButton(pht('See Subprojects'))
+-        ->setDisableWorkflowOnSubmit(true)
+-        ->addCancelButton($done_uri);
++      return $this->newDialog()->setTitle('沿用所属项目成员')
++        ->appendParagraph('里程碑沿用所属项目成员，请在所属项目管理。')
++        ->addCancelButton('/project/members/'.$project->getParentProject()->getID().'/');
+     }
+-
++    $tokens = array(); $errors = array(); $state = TeamProjectMembership::getStateToken($project);
+     if ($request->isFormPost()) {
+-      $member_phids = $request->getArr('memberPHIDs');
+-
+-      $type_member = PhabricatorProjectProjectHasMemberEdgeType::EDGECONST;
+-
+-      $xactions = array();
+-
+-      $xactions[] = id(new PhabricatorProjectTransaction())
+-        ->setTransactionType(PhabricatorTransactions::TYPE_EDGE)
+-        ->setMetadataValue('edge:type', $type_member)
+-        ->setNewValue(
+-          array(
+-            '+' => array_fuse($member_phids),
+-          ));
+-
+-      $editor = id(new PhabricatorProjectTransactionEditor())
+-        ->setActor($viewer)
+-        ->setContentSourceFromRequest($request)
+-        ->setContinueOnNoEffect(true)
+-        ->setContinueOnMissingFields(true)
+-        ->applyTransactions($project, $xactions);
+-
+-      return id(new AphrontRedirectResponse())
+-        ->setURI($done_uri);
++      $tokens = $request->getArr('memberPHIDs'); $state = $request->getStr('expectedState');
++      try {
++        $members = TeamProjectMemberImport::resolve($viewer, $tokens);
++        TeamProjectMembership::changeMembers($viewer, $project, '+', $members, $state,
++          PhabricatorContentSource::newFromRequest($request));
++        return id(new AphrontRedirectResponse())->setURI($done_uri.'?membersSaved=1');
++      } catch (InvalidArgumentException $ex) { $errors[] = $ex->getMessage(); }
++      catch (PhabricatorApplicationTransactionValidationException $ex) { $errors = $ex->getErrorMessages(); }
+     }
+-
+-    $form = id(new AphrontFormView())
+-      ->setUser($viewer)
+-      ->appendControl(
+-        id(new AphrontFormTokenizerControl())
+-          ->setName('memberPHIDs')
+-          ->setLabel(pht('Members'))
+-          ->setDatasource(new PhabricatorPeopleDatasource()));
+-
+-    return $this->newDialog()
+-      ->setTitle(pht('Add Members'))
+-      ->appendForm($form)
+-      ->addCancelButton($done_uri)
+-      ->addSubmitButton(pht('Add Members'));
++    $form = id(new AphrontFormView())->setUser($viewer)
++      ->addHiddenInput('expectedState', $state)
++      ->appendControl(id(new AphrontFormTokenizerControl())->setName('memberPHIDs')
++        ->setLabel('添加成员')->setValue($tokens)->setDatasource(new TeamProjectMemberImportDatasource())
++        ->setCaption('支持搜索人员、团队或项目，一次性导入当前有效成员；不会复制来源的权限或角色。'));
++    $dialog = $this->newDialog()->setTitle('添加项目成员')->appendForm($form)
++      ->addCancelButton($done_uri)->addSubmitButton('添加成员');
++    foreach ($errors as $error) { $dialog->appendParagraph($error); }
++    return $dialog;
+   }
+-
+ }
+--- a/src/applications/project/controller/PhabricatorProjectMembersRemoveController.php
++++ b/src/applications/project/controller/PhabricatorProjectMembersRemoveController.php
+@@ -4,6 +4,10 @@
+   extends PhabricatorProjectController {
+ 
+   public function handleRequest(AphrontRequest $request) {
++    if ($request->isHTTPPost()) {
++      try { $request->validateCSRF(); }
++      catch (AphrontMalformedRequestException $ex) { return new Aphront400Response(); }
++    }
+     $viewer = $request->getViewer();
+     $id = $request->getURIData('id');
+     $type = $request->getURIData('type');
+@@ -23,6 +27,8 @@
+       return new Aphront404Response();
+     }
+ 
++    if (!TeamProjectMembership::canManage($viewer, $project)) { return new Aphront403Response(); }
++
+     if ($type == 'watchers') {
+       $is_watcher = true;
+       $edge_type = PhabricatorObjectHasWatcherEdgeType::EDGECONST;
+@@ -38,26 +44,32 @@
+     $members_uri = $this->getApplicationURI('members/'.$project->getID().'/');
+     $remove_phid = $request->getStr('phid');
+ 
++    if (!$is_watcher && !in_array(
++      $remove_phid, $project->getDirectMemberPHIDs())) {
++      return $this->newDialog()
++        ->setTitle(pht('来自子项目的成员'))
++        ->appendParagraph(pht('此用户不是本级直接成员，请在相应子项目中移除。'))
++        ->addCancelButton($members_uri);
++    }
++
++    $state = TeamProjectMembership::getStateToken($project);
++    $errors = array();
+     if ($request->isFormPost()) {
+-      $xactions = array();
+-
+-      $xactions[] = id(new PhabricatorProjectTransaction())
+-        ->setTransactionType(PhabricatorTransactions::TYPE_EDGE)
+-        ->setMetadataValue('edge:type', $edge_type)
+-        ->setNewValue(
+-          array(
+-            '-' => array($remove_phid => $remove_phid),
+-          ));
+-
+-      $editor = id(new PhabricatorProjectTransactionEditor())
+-        ->setActor($viewer)
+-        ->setContentSourceFromRequest($request)
+-        ->setContinueOnNoEffect(true)
+-        ->setContinueOnMissingFields(true)
+-        ->applyTransactions($project, $xactions);
+-
+-      return id(new AphrontRedirectResponse())
+-        ->setURI($members_uri);
++      $state = $request->getStr('expectedState');
++      try {
++        if (!$is_watcher) {
++          TeamProjectMembership::changeMembers($viewer, $project, '-', array($remove_phid), $state,
++            PhabricatorContentSource::newFromRequest($request));
++        } else {
++          id(new PhabricatorProjectTransactionEditor())->setActor($viewer)
++            ->setContentSourceFromRequest($request)->setContinueOnNoEffect(true)->setContinueOnMissingFields(true)
++            ->applyTransactions($project, array(id(new PhabricatorProjectTransaction())
++              ->setTransactionType(PhabricatorTransactions::TYPE_EDGE)->setMetadataValue('edge:type', $edge_type)
++              ->setNewValue(array('-' => array($remove_phid => $remove_phid)))));
++        }
++        return id(new AphrontRedirectResponse())->setURI($members_uri.'?membersSaved=1');
++      } catch (InvalidArgumentException $ex) { $errors[] = $ex->getMessage(); }
++      catch (PhabricatorApplicationTransactionValidationException $ex) { $errors = $ex->getErrorMessages(); }
+     }
+ 
+     $handle = id(new PhabricatorHandleQuery())
+@@ -81,15 +93,23 @@
+         'Remove %s as a project member of %s?',
+         $target_name,
+         $project_name);
+-      $button = pht('Remove Member');
++      $button = pht('移除成员');
++      $body = array($body, ' ', '同时清除本级成员角色；其他团队或项目策略仍可能授予访问权限。');
++      if ($project->getHasSubprojects()) {
++        $body = array($body, ' ', pht(
++          '仅移除本级直接成员身份；仍属于子项目的用户会继续作为汇总成员显示。'));
++      }
+     }
+ 
+-    return $this->newDialog()
++    $dialog = $this->newDialog()
+       ->setTitle($title)
+       ->addHiddenInput('phid', $remove_phid)
++      ->addHiddenInput('expectedState', $state)
+       ->appendParagraph($body)
+       ->addCancelButton($members_uri)
+       ->addSubmitButton($button);
++    foreach ($errors as $error) { $dialog->appendParagraph($error); }
++    return $dialog;
+   }
+ 
+ }
+--- a/src/applications/project/controller/PhabricatorProjectMembersViewController.php
++++ b/src/applications/project/controller/PhabricatorProjectMembersViewController.php
+@@ -22,12 +22,28 @@
+     $title = pht('Members and Watchers');
+     $curtain = $this->buildCurtainView($project);
+ 
++    $direct_members = $project->isMilestone()
++      ? $project->getMemberPHIDs()
++      : $project->getDirectMemberPHIDs();
++    $inherited_members = array_diff($project->getMemberPHIDs(), $direct_members);
++
+     $member_list = id(new PhabricatorProjectMemberListView())
+       ->setViewer($viewer)
+       ->setProject($project)
+       ->setBackground(PHUIObjectBoxView::BLUE_PROPERTY)
+-      ->setUserPHIDs($project->getMemberPHIDs())
++      ->setUserPHIDs($direct_members)
+       ->setShowNote(true);
++
++    $inherited_list = null;
++    if ($inherited_members) {
++      $inherited_list = id(new PhabricatorProjectMemberListView())
++        ->setViewer($viewer)
++        ->setProject($project)
++        ->setIsInherited(true)
++        ->setBackground(PHUIObjectBoxView::BLUE_PROPERTY)
++        ->setUserPHIDs($inherited_members)
++        ->setShowNote(true);
++    }
+ 
+     $watcher_list = id(new PhabricatorProjectWatcherListView())
+       ->setViewer($viewer)
+@@ -57,6 +73,8 @@
+       ->addClass('project-view-people-home')
+       ->setMainColumn(array(
+         $member_list,
++        $this->buildRoleManagement($project),
++        $inherited_list,
+         $watcher_list,
+       ));
+ 
+@@ -67,6 +85,24 @@
+       ->appendChild($view);
+   }
+ 
++  private function buildRoleManagement(PhabricatorProject $project) {
++    $viewer = $this->getViewer();
++    if ($project->isMilestone() || !TeamProjectMembership::canManage($viewer, $project)) { return null; }
++    $members = array_values(array_unique(array_merge($project->getDirectMemberPHIDs(),
++      array_keys(TeamProjectMembership::roleMap($project)))));
++    $options = TeamProjectMembership::getRoleOptions(); $rows = array();
++    foreach ($members as $phid) {
++      $role = TeamProjectMembership::getRole($project, $phid);
++      $rows[] = array($viewer->renderHandle($phid), idx($options, $role),
++        phutil_tag('a', array('href' => TeamProjectMembership::roleURI($project, $phid)), '管理角色'));
++    }
++    $table = id(new AphrontTableView($rows))->setHeaders(array('本级成员或管理员', '项目内角色', '操作'));
++    return id(new PHUIObjectBoxView())->setHeaderText('成员权限')->appendChild(
++      phutil_tag('p', array('style' => 'padding:12px;'),
++        '管理员可添加、移除成员或调整角色。只读角色会限制编辑，自行退出后仍保留该限制；按项目策略保留其他来源授权。项目角色不会授予站点管理员权限。'))
++      ->appendChild($table);
++  }
++
+   private function buildCurtainView(PhabricatorProject $project) {
+     $viewer = $this->getViewer();
+     $id = $project->getID();
+@@ -91,7 +127,10 @@
+ 
+     $viewer_phid = $viewer->getPHID();
+ 
+-    if (!$project->isUserMember($viewer_phid)) {
++    $is_direct_member = in_array(
++      $viewer_phid, $project->getDirectMemberPHIDs());
++
++    if (!$is_direct_member) {
+       $curtain->addAction(
+         id(new PhabricatorActionView())
+           ->setHref('/project/update/'.$project->getID().'/join/')
+@@ -142,15 +181,15 @@
+         ->setWorkflow(true)
+         ->setDisabled(!$can_silence));
+ 
+-    $can_add = $can_edit && $supports_edit;
+-
+-    $curtain->addAction(
++    $can_add = TeamProjectMembership::canManage($viewer, $project) && $supports_edit;
++
++    if ($can_add) { $curtain->addAction(
+       id(new PhabricatorActionView())
+-        ->setName(pht('Add Members'))
++        ->setName(pht('添加成员'))
+         ->setIcon('fa-user-plus')
+         ->setHref("/project/members/{$id}/add/")
+         ->setWorkflow(true)
+-        ->setDisabled(!$can_add));
++        ->setDisabled(!$can_add)); }
+ 
+     $can_lock = $can_edit && $supports_edit && $this->hasApplicationCapability(
+       ProjectCanLockProjectsCapability::CAPABILITY);
+@@ -180,8 +219,9 @@
+     } else if ($project->getHasSubprojects()) {
+       $header = pht('Parent Project');
+       $note = pht(
+-        'Members of all subprojects are members of this project.');
+-      $show_join = false;
++        '本级成员可直接管理。子项目成员会汇总到本级；移除其汇总身份需在'.
++        '相应子项目中操作。本级成员不会自动加入子项目。');
++      $show_join = true;
+     } else if ($project->getIsMembershipLocked()) {
+       $header = pht('Locked Project');
+       $note = pht(
+--- a/src/applications/project/controller/PhabricatorProjectUpdateController.php
++++ b/src/applications/project/controller/PhabricatorProjectUpdateController.php
+@@ -35,17 +35,25 @@
+     $done_uri = "/project/members/{$id}/";
+ 
+     if (!$project->supportsEditMembers()) {
+-      $copy = pht('Parent projects and milestones do not support adding '.
+-        'members. You can add members directly to any non-parent subproject.');
++      $copy = pht('里程碑沿用父项目成员，请在父项目中管理成员。');
+ 
+-      $subprojects_uri = "/project/subprojects/{$id}/";
++      $parent_id = $project->getParentProject()->getID();
++      $subprojects_uri = "/project/members/{$parent_id}/";
+ 
+       return $this->newDialog()
+         ->setTitle(pht('Unsupported Project'))
+         ->appendParagraph($copy)
+         ->setSubmitURI($subprojects_uri)
+-        ->addSubmitButton(pht('See Subprojects'))
++        ->addSubmitButton(pht('查看父项目成员'))
+         ->setDisableWorkflowOnSubmit(true)
++        ->addCancelButton($done_uri);
++    }
++
++    if ($action === 'leave' && !in_array(
++      $viewer->getPHID(), $project->getDirectMemberPHIDs())) {
++      return $this->newDialog()
++        ->setTitle(pht('来自子项目的成员'))
++        ->appendParagraph(pht('你没有本级直接成员身份，请到相应子项目中退出。'))
+         ->addCancelButton($done_uri);
+     }
+ 
+@@ -97,6 +105,10 @@
+           'Your tremendous contributions to this project will be sorely '.
+           'missed. Are you sure you want to leave?');
+         $button = pht('Leave Project');
++        if ($project->getHasSubprojects()) {
++          $body = array($body, ' ', pht(
++            '退出本级后，若你仍属于子项目，仍会保留汇总成员身份。'));
++        }
+       } else {
+         $title = pht('Membership Locked');
+         $body = pht(
+--- a/src/applications/project/controller/PhabricatorProjectSubprojectWarningController.php
++++ b/src/applications/project/controller/PhabricatorProjectSubprojectWarningController.php
+@@ -23,29 +23,8 @@
+     }
+ 
+     $id = $project->getID();
+-    $cancel_uri = "/project/subprojects/{$id}/";
+-    $done_uri = "/project/edit/?parent={$id}";
+-
+-    if ($request->isFormPost()) {
+-      return id(new AphrontRedirectResponse())
+-        ->setURI($done_uri);
+-    }
+-
+-    $doc_href = PhabricatorEnv::getDoclink('Projects User Guide');
+-
+-    $conversion_help = pht(
+-      "Creating a project's first subproject **moves all ".
+-      "members** to become members of the subproject instead.".
+-      "\n\n".
+-      "See [[ %s | Projects User Guide ]] in the documentation for details. ".
+-      "This process can not be undone.",
+-      $doc_href);
+-
+-    return $this->newDialog()
+-      ->setTitle(pht('Convert to Parent Project'))
+-      ->appendChild(new PHUIRemarkupView($viewer, $conversion_help))
+-      ->addCancelButton($cancel_uri)
+-      ->addSubmitButton(pht('Convert Project'));
++    return id(new AphrontRedirectResponse())
++      ->setURI("/project/edit/?parent={$id}");
+   }
+ 
+ }
+--- a/src/applications/project/view/PhabricatorProjectMemberListView.php
++++ b/src/applications/project/view/PhabricatorProjectMemberListView.php
+@@ -3,7 +3,17 @@
+ final class PhabricatorProjectMemberListView
+   extends PhabricatorProjectUserListView {
+ 
++  private $isInherited = false;
++
++  public function setIsInherited($is_inherited) {
++    $this->isInherited = $is_inherited;
++    return $this;
++  }
++
+   protected function canEditList() {
++    if ($this->isInherited) {
++      return false;
++    }
+     $viewer = $this->getViewer();
+     $project = $this->getProject();
+ 
+@@ -11,10 +21,7 @@
+       return false;
+     }
+ 
+-    return PhabricatorPolicyFilter::hasCapability(
+-      $viewer,
+-      $project,
+-      PhabricatorPolicyCapability::CAN_EDIT);
++    return TeamProjectMembership::canManage($viewer, $project);
+   }
+ 
+   protected function getNoDataString() {
+@@ -22,16 +29,28 @@
+   }
+ 
+   protected function getRemoveURI($phid) {
++    if ($this->isInherited || !TeamProjectMembership::canManage($this->getViewer(), $this->getProject())) {
++      return null;
++    }
+     $project = $this->getProject();
+     $id = $project->getID();
+     return "/project/members/{$id}/remove/?phid={$phid}";
+   }
+ 
+   protected function getHeaderText() {
++    if ($this->isInherited) {
++      return pht('来自子项目的成员');
++    }
++    if ($this->getProject()->getHasSubprojects() && !$this->getLimit()) {
++      return pht('本级直接成员');
++    }
+     return pht('Members');
+   }
+ 
+   protected function getMembershipNote() {
++    if ($this->isInherited) {
++      return pht('这些成员通过子项目加入本级，请在相应子项目中管理其成员身份。');
++    }
+     $viewer = $this->getViewer();
+     $viewer_phid = $viewer->getPHID();
+     $project = $this->getProject();
+--- a/src/applications/project/view/PhabricatorProjectUserListView.php
++++ b/src/applications/project/view/PhabricatorProjectUserListView.php
+@@ -140,9 +140,11 @@
+         $item->addIcon('fa-lock', pht('Has MFA'));
+       }
+ 
++      $remove_uri = null;
+       if ($supports_edit && !$is_panel) {
+         $remove_uri = $this->getRemoveURI($user_phid);
+-
++      }
++      if ($remove_uri) {
+         $item->addAction(
+           id(new PHUIListItemView())
+             ->setIcon('fa-times')

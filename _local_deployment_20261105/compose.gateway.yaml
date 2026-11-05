@@ -1,0 +1,115 @@
+services:
+  traefik:
+    image: ${TRAEFIK_IMAGE:?Run scripts/init-local.py first}
+    restart: unless-stopped
+    command:
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --providers.file.filename=/etc/traefik/dynamic.yaml
+      - --entrypoints.web.address=:80
+      - --entrypoints.web.http.aliasheadersstrategy=reject
+      - --entrypoints.web.http.redirections.entrypoint.to=:8443
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+      - --entrypoints.websecure.address=:443
+      - --entrypoints.websecure.http.aliasheadersstrategy=reject
+      - --entrypoints.ping.address=:8082
+      - --entrypoints.ping.http.aliasheadersstrategy=reject
+      - --ping=true
+      - --ping.entrypoint=ping
+      - --api.dashboard=false
+      - --log.level=INFO
+      - --accesslog=true
+      - --accesslog.fields.headers.defaultmode=drop
+      - --accesslog.fields.names.RequestPath=drop
+    ports:
+      - "127.0.0.1:8080:80"
+      - "127.0.0.1:8443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./config/traefik/dynamic.yaml:/etc/traefik/dynamic.yaml:ro
+      - ./config/tls:/etc/traefik/tls:ro
+    networks:
+      ingress:
+        ipv4_address: 172.30.10.2
+      web:
+        ipv4_address: 172.29.240.2
+      notify_client: {}
+      edge: {}
+    security_opt: [no-new-privileges:true]
+    read_only: true
+    tmpfs: [/tmp]
+    mem_limit: 192m
+    cpus: 0.5
+    healthcheck:
+      test: [CMD, traefik, healthcheck, --ping, --ping.entrypoint=ping, --entrypoints.ping.address=:8082]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    logging:
+      driver: json-file
+      options: {max-size: 10m, max-file: '3'}
+  stargate:
+    # Keep dynamic allocation from claiming the trusted proxy address on restart.
+    networks:
+      ingress:
+        ipv4_address: 172.30.10.3
+    labels:
+      traefik.enable: 'true'
+      traefik.docker.network: team-management-ingress
+      traefik.http.services.stargate.loadbalancer.server.port: '8080'
+      traefik.http.routers.auth.rule: 'Host(`${AUTH_ROUTER_HOST}`) && (Path(`/`) || Path(`/_login`) || Path(`/_send_verify_code`) || Path(`/_logout`) || PathPrefix(`/assets`) || Path(`/favicon.ico`))'
+      traefik.http.routers.auth.entrypoints: websecure
+      traefik.http.routers.auth.tls: 'true'
+      traefik.http.routers.auth.middlewares: strip-identity@file
+      traefik.http.routers.auth.service: stargate
+      traefik.http.routers.exchange.rule: 'Host(`${PHORGE_HOST}`) && Path(`/_session_exchange`) && Method(`GET`)'
+      traefik.http.routers.exchange.priority: '300'
+      traefik.http.routers.exchange.entrypoints: websecure
+      traefik.http.routers.exchange.tls: 'true'
+      traefik.http.routers.exchange.middlewares: strip-identity@file
+      traefik.http.routers.exchange.service: stargate
+  phorge:
+    networks:
+      web:
+        ipv4_address: 172.29.240.3
+    labels:
+      traefik.enable: 'true'
+      traefik.docker.network: team-management-web
+      traefik.http.services.phorge.loadbalancer.server.port: '80'
+      traefik.http.routers.phorge.rule: 'Host(`${PHORGE_HOST}`)'
+      traefik.http.routers.phorge.priority: '10'
+      traefik.http.routers.phorge.entrypoints: websecure
+      traefik.http.routers.phorge.tls: 'true'
+      traefik.http.routers.phorge.middlewares: strip-identity@file,personal-auth@file
+      traefik.http.routers.phorge-files.rule: 'Host(`${PHORGE_HOST}`) && PathPrefix(`/file/`)'
+      traefik.http.routers.phorge-files.priority: '200'
+      traefik.http.routers.phorge-files.entrypoints: websecure
+      traefik.http.routers.phorge-files.tls: 'true'
+      traefik.http.routers.phorge-files.service: phorge
+      traefik.http.routers.phorge-files.middlewares: strip-identity@file,personal-auth@file,file-private-cache@file
+  gorge-notification:
+    labels:
+      traefik.enable: 'true'
+      traefik.docker.network: team-management-notify-client
+      traefik.http.services.notification.loadbalancer.server.port: '22280'
+      traefik.http.routers.notification.rule: 'Host(`${PHORGE_HOST}`) && PathPrefix(`/ws/`)'
+      traefik.http.routers.notification.priority: '100'
+      traefik.http.routers.notification.entrypoints: websecure
+      traefik.http.routers.notification.tls: 'true'
+      traefik.http.routers.notification.middlewares: strip-identity@file,personal-auth@file,notification-path@file
+networks:
+  edge: {}
+  ingress:
+    name: team-management-ingress
+    internal: true
+    ipam:
+      config:
+        - subnet: 172.30.10.0/24
+  web:
+    name: team-management-web
+    internal: true
+    ipam:
+      config:
+        - subnet: 172.29.240.0/24
+  notify_client:
+    name: team-management-notify-client

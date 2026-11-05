@@ -1,0 +1,233 @@
+# Identity services run locally, deny all users until config/warden/users.json
+# is populated, and refuse OTP delivery until a real provider is configured.
+x-identity-security: &identity-security
+  restart: unless-stopped
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  tmpfs: [/tmp]
+  mem_limit: 128m
+  cpus: 0.5
+  pids_limit: 128
+  logging:
+    driver: json-file
+    options:
+      max-size: 10m
+      max-file: "3"
+
+services:
+  stargate:
+    <<: *identity-security
+    mem_limit: 192m
+    image: team-management/stargate:3fd1784e-personal-password
+    pull_policy: never
+    build:
+      context: ./vendor/stargate
+      dockerfile: ../../docker/identity.Dockerfile
+      args:
+        GOTOOLCHAIN: go1.27.1
+        MAIN_PACKAGE: ./src/cmd/stargate
+        VERSION: v1.2.0-personal-password
+        COMMIT: 3fd1784efa03df53005912b78fa2b7202c1dbba1
+    environment:
+      PORT: "8080"
+      AUTH_HOST: ${AUTH_HOST:-auth.localhost:8443}
+      CALLBACK_ALLOWED_HOSTS: ${CALLBACK_ALLOWED_HOSTS:-pm.localhost:8443}
+      SESSION_EXCHANGE_SECRET: ${SESSION_EXCHANGE_SECRET:?run scripts/generate-identity.py}
+      COOKIE_SECURE: "true"
+      TRUSTED_PROXIES: 172.30.10.2/32
+      LANGUAGE: zh
+      WARDEN_ENABLED: "true"
+      WARDEN_URL: http://warden:8081
+      WARDEN_API_KEY: ${WARDEN_API_KEY:?run scripts/generate-identity.py}
+      WARDEN_CACHE_TTL: "5"
+      HERALD_ENABLED: "true"
+      HERALD_URL: http://herald:8082
+      HERALD_API_KEY: ${HERALD_API_KEY:?run scripts/generate-identity.py}
+      HERALD_TOTP_ENABLED: "false"
+      PASSWORD_HEADER_AUTH_ENABLED: "false"
+      HEADER_AUTH_ENABLED: "false"
+      # Personal credentials are keyed by immutable Warden user_id. The
+      # upstream shared PASSWORDS login remains disabled.
+      PERSONAL_PASSWORD_FILE: /app/passwords/users.json
+      DINGTALK_LOGIN_READY: "false"
+      LOGIN_SMS_ENABLED: "false"
+      LOGIN_EMAIL_ENABLED: "true"
+      SESSION_STORAGE_ENABLED: "true"
+      SESSION_STORAGE_REDIS_ADDR: stargate-redis:6379
+      SESSION_STORAGE_REDIS_PASSWORD: ${STARGATE_REDIS_PASSWORD:?run scripts/generate-identity.py}
+      SESSION_STORAGE_REDIS_DB: "0"
+      AUTH_REFRESH_ENABLED: "true"
+      AUTH_REFRESH_INTERVAL: 30s
+      AUDIT_LOG_ENABLED: "true"
+      AUDIT_LOG_FORMAT: json
+    volumes:
+      - ./config/passwords:/app/passwords:ro
+      - ./config/stargate/login.warden.html:/app/web/templates/login.warden.html:ro
+    depends_on:
+      warden:
+        condition: service_healthy
+      herald:
+        condition: service_healthy
+      stargate-redis:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, wget, -q, -O, /dev/null, http://127.0.0.1:8080/healthz]
+      interval: 15s
+      timeout: 3s
+      retries: 5
+      start_period: 15s
+    networks: [ingress, auth, stargate-state]
+
+  warden:
+    <<: *identity-security
+    image: team-management/warden:3cc5ee7c
+    pull_policy: never
+    build:
+      context: ./vendor/warden
+      dockerfile: ../../docker/identity.Dockerfile
+      args:
+        GOTOOLCHAIN: go1.27.1
+        VERSION: v1.4.0
+        COMMIT: 3cc5ee7cb5bcf1e02b7f2b8cbf721de16a3773f4
+    environment:
+      PORT: "8081"
+      ENVIRONMENT: production
+      MERGE_MODE: ONLY_LOCAL
+      REDIS_ENABLED: "false"
+      DATA_FILE: /app/identity/users.json
+      INTERVAL: "5"
+      SNAPSHOT_MAX_AGE: 30s
+      REQUIRE_EXPLICIT_USER_ID: "true"
+      EMPTY_RULESET_POLICY: consistency-first
+      RESPONSE_FIELDS: mail,phone,dingtalk_userid,user_id,status,scope,role,name
+      API_KEY: ${WARDEN_API_KEY:?run scripts/generate-identity.py}
+      WARDEN_METRICS_REQUIRE_AUTH: "true"
+      LOG_LEVEL: info
+    volumes:
+      # Mount the directory, so atomic replacement of users.json is visible.
+      - ./config/warden:/app/identity:ro
+    healthcheck:
+      test: [CMD, curl, --fail, --silent, http://127.0.0.1:8081/healthcheck]
+      interval: 15s
+      timeout: 3s
+      retries: 5
+      start_period: 15s
+    networks: [auth]
+
+  herald:
+    <<: *identity-security
+    image: team-management/herald:4deb444f
+    pull_policy: never
+    build:
+      context: ./vendor/herald
+      dockerfile: ../../docker/identity.Dockerfile
+      args:
+        GOTOOLCHAIN: go1.27.1
+        VERSION: v1.3.0
+        COMMIT: 4deb444fafa056ca2e84e8bb0757cde7f9af7b17
+    environment:
+      PORT: "8082"
+      ENVIRONMENT: production
+      REDIS_ADDR: herald-redis:6379
+      REDIS_PASSWORD: ${HERALD_REDIS_PASSWORD:?run scripts/generate-identity.py}
+      REDIS_DB: "0"
+      REQUEST_AUTH_MODE: api_key
+      API_KEY: ${HERALD_API_KEY:?run scripts/generate-identity.py}
+      HERALD_IDEMPOTENCY_SECRET: ${HERALD_IDEMPOTENCY_SECRET:?run scripts/generate-identity.py}
+      HERALD_PII_PEPPER: ${HERALD_PII_PEPPER:?run scripts/generate-identity.py}
+      PROVIDER_FAILURE_POLICY: strict
+      HERALD_TEST_MODE: "false"
+      # Intentionally no provider URL: unknown SMTP credentials must never
+      # silently become a test provider or permit undelivered codes to verify.
+      HERALD_SMTP_API_URL: ""
+      HERALD_SMTP_API_KEY: ${HERALD_SMTP_API_KEY:?run scripts/generate-identity.py}
+      HERALD_TOTP_ENABLED: "false"
+      AUDIT_ENABLED: "true"
+      AUDIT_MASK_DESTINATION: "true"
+      LOG_LEVEL: info
+    depends_on:
+      herald-redis:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, /bin/identity-service, -healthcheck]
+      interval: 15s
+      timeout: 3s
+      retries: 5
+      start_period: 15s
+    networks: [auth, herald-state]
+
+  herald-smtp:
+    <<: *identity-security
+    image: team-management/herald-smtp:1a63bb89
+    pull_policy: never
+    build:
+      context: ./vendor/herald-smtp
+      dockerfile: ../../docker/identity.Dockerfile
+      args:
+        GOTOOLCHAIN: go1.27.3
+        VERSION: 1a63bb89
+        COMMIT: 1a63bb89d3fb27629e3c50915626d98d1bb6fde2
+    environment:
+      PORT: "8084"
+      API_KEY: ${HERALD_SMTP_API_KEY:?run scripts/generate-identity.py}
+      SMTP_HOST: ""
+      SMTP_FROM: ""
+      SMTP_USE_TLS: "false"
+      SMTP_USE_STARTTLS: "true"
+      SMTP_SKIP_TLS_VERIFY: "false"
+      LOG_LEVEL: info
+    healthcheck:
+      test: [CMD, curl, --fail, --silent, http://127.0.0.1:8084/healthz]
+      interval: 15s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    networks: [smtp-egress]
+
+  stargate-redis:
+    <<: *identity-security
+    image: ${REDIS_IMAGE:-redis:7-alpine@sha256:ff02b58f971e7d7d156a1267e283fcbbeee91773b6aa36c49dac28ecfe28eadf}
+    user: redis
+    command: [redis-server, /usr/local/etc/redis/redis.conf]
+    environment:
+      REDISCLI_AUTH: ${STARGATE_REDIS_PASSWORD:?run scripts/generate-identity.py}
+    volumes:
+      - stargate-redis-data:/data
+      - ./config/redis/stargate.conf:/usr/local/etc/redis/redis.conf:ro
+    healthcheck:
+      test: [CMD, redis-cli, --no-auth-warning, ping]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks: [stargate-state]
+
+  herald-redis:
+    <<: *identity-security
+    image: ${REDIS_IMAGE:-redis:7-alpine@sha256:ff02b58f971e7d7d156a1267e283fcbbeee91773b6aa36c49dac28ecfe28eadf}
+    user: redis
+    command: [redis-server, /usr/local/etc/redis/redis.conf]
+    environment:
+      REDISCLI_AUTH: ${HERALD_REDIS_PASSWORD:?run scripts/generate-identity.py}
+    volumes:
+      - herald-redis-data:/data
+      - ./config/redis/herald.conf:/usr/local/etc/redis/redis.conf:ro
+    healthcheck:
+      test: [CMD, redis-cli, --no-auth-warning, ping]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks: [herald-state]
+
+networks:
+  auth:
+    internal: true
+  stargate-state:
+    internal: true
+  herald-state:
+    internal: true
+  smtp-egress: {}
+
+volumes:
+  stargate-redis-data:
+  herald-redis-data:

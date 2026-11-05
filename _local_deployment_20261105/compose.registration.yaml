@@ -1,0 +1,45 @@
+# Public registration only writes private pending applications. It has no
+# credentials or writable mount for Warden, Phorge, or business data.
+services:
+  registration:
+    image: python:3.13-alpine@sha256:bf12ecc0bea3f171d55145dd02c78b5eeb09f30ee2ac9cc2b4c9e4e8f5e30741
+    restart: unless-stopped
+    command: [python, /app/server.py]
+    user: '10001:10001'
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 128m
+    cpus: 0.5
+    pids_limit: 64
+    environment:
+      PYTHONDONTWRITEBYTECODE: '1'
+      REGISTRATION_ORIGIN: ${REGISTRATION_ORIGIN:?run scripts/init-registration.py}
+      REGISTRATION_TRUSTED_PROXY: ${REGISTRATION_TRUSTED_PROXY:-172.30.10.2}
+    volumes:
+      - ./config/registration/server.py:/app/server.py:ro
+      - ./config/registration/credential_hashes.py:/app/credential_hashes.py:ro
+      - ./config/registration/csrf.key:/run/secrets/registration_csrf_key:ro
+      - ./config/warden:/warden:ro
+      - ./state/registration:/data
+    networks:
+      ingress:
+        ipv4_address: 172.30.10.4
+    labels:
+      traefik.enable: 'true'
+      traefik.docker.network: team-management-ingress
+      traefik.http.services.registration.loadbalancer.server.port: '8085'
+      traefik.http.routers.registration.rule: 'Host(`${PHORGE_HOST}`) && Path(`/_register`)'
+      traefik.http.routers.registration.priority: '450'
+      traefik.http.routers.registration.entrypoints: websecure
+      traefik.http.routers.registration.tls: 'true'
+      traefik.http.routers.registration.service: registration
+      traefik.http.routers.registration.middlewares: strip-identity@file
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8085/healthz',timeout=3)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: json-file
+      options: {max-size: 5m, max-file: '2'}

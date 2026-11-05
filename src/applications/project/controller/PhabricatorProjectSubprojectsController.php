@@ -29,6 +29,7 @@ final class PhabricatorProjectSubprojectsController
         ->withParentProjectPHIDs(array($project->getPHID()))
         ->needImages(true)
         ->withIsMilestone(false)
+        ->setOrderVector(array('name'))
         ->execute();
 
       $subproject_list = id(new PHUIObjectBoxView())
@@ -38,7 +39,8 @@ final class PhabricatorProjectSubprojectsController
           id(new PhabricatorProjectListView())
             ->setViewer($viewer)
             ->setProjects($subprojects)
-            ->setNoDataString(pht('This project has no subprojects.'))
+            ->setBrowseHierarchy(true)
+            ->setNoDataString(pht('没有可查看的子项目。'))
             ->renderList());
     } else {
       $subprojects = array();
@@ -60,7 +62,7 @@ final class PhabricatorProjectSubprojectsController
           id(new PhabricatorProjectListView())
             ->setViewer($viewer)
             ->setProjects($milestones)
-            ->setNoDataString(pht('This project has no milestones.'))
+            ->setNoDataString(pht('没有可查看的里程碑。'))
             ->renderList());
     } else {
       $milestones = array();
@@ -100,6 +102,16 @@ final class PhabricatorProjectSubprojectsController
       ->addClass('project-view-home')
       ->addClass('project-view-people-home')
       ->setMainColumn(array(
+          id(new PHUIInfoView())
+            ->setSeverity(PHUIInfoView::SEVERITY_NOTICE)
+            ->appendChild(array(
+              pht('这里的里程碑用于组织阶段任务。要记录验收、发布或阶段成果，请到'),
+              phutil_tag('a',
+                array('href' => '/project/progress/'.$project->getID().
+                  '/?compose=node#publish'),
+                pht('开发历史 → 发布项目记录')),
+              pht('，保留时间、参与者和具体成果。'),
+            )),
           $info_view,
           $subproject_list,
           $milestone_list,
@@ -134,17 +146,9 @@ final class PhabricatorProjectSubprojectsController
 
     $can_subproject = ($can_create && $can_edit && $allows_subprojects);
 
-    // If we're offering to create the first subproject, we're going to warn
-    // the user about the effects before moving forward.
-    if ($can_subproject && !$subprojects) {
-      $subproject_href = "/project/warning/{$id}/";
-      $subproject_disabled = false;
-      $subproject_workflow = true;
-    } else {
-      $subproject_href = "/project/edit/?parent={$id}";
-      $subproject_disabled = !$can_subproject;
-      $subproject_workflow = !$can_subproject;
-    }
+    $subproject_href = "/project/edit/?parent={$id}";
+    $subproject_disabled = !$can_subproject;
+    $subproject_workflow = !$can_subproject;
 
     $curtain->addAction(
       id(new PhabricatorActionView())

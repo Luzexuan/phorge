@@ -1,0 +1,43 @@
+# Activated by .public-enabled only after identity/session acceptance succeeds.
+# Only the canonical server IP is accepted, on both HTTP and HTTPS.
+services:
+  traefik:
+    ports: !override
+      - "0.0.0.0:80:80"
+      - "0.0.0.0:443:443"
+      - "127.0.0.1:8080:80"
+      - "127.0.0.1:8443:443"
+    command: !override
+      - --configFile=/etc/traefik/public-static.yaml
+    volumes:
+      - ./config/traefik/public-static.yaml:/etc/traefik/public-static.yaml:ro
+      - ./config/traefik/acme:/etc/traefik/acme
+    labels:
+      traefik.enable: 'true'
+      # An entrypoint-wide redirect would also accept arbitrary Host headers.
+      # This router redirects only the canonical host; other hosts receive 404.
+      traefik.http.routers.public-http.rule: 'Host(`45.77.36.106`)'
+      traefik.http.routers.public-http.entrypoints: web
+      traefik.http.routers.public-http.middlewares: public-https
+      traefik.http.routers.public-http.service: noop@internal
+      traefik.http.middlewares.public-https.redirectscheme.scheme: https
+      traefik.http.middlewares.public-https.redirectscheme.port: '443'
+      traefik.http.middlewares.public-https.redirectscheme.permanent: 'true'
+  stargate:
+    environment:
+      AUTH_HOST: 45.77.36.106
+      CALLBACK_ALLOWED_HOSTS: ''
+      LOGIN_PAGE_TITLE: "团队管理登录"
+      LOGIN_PAGE_FOOTER_TEXT: "新用户请先注册，管理员批准后可使用手机号或邮箱和密码登录。"
+    labels:
+      traefik.http.routers.auth.rule: 'Host(`45.77.36.106`) && (Path(`/_login`) || Path(`/_send_verify_code`) || Path(`/_logout`) || PathPrefix(`/assets`) || Path(`/favicon.ico`))'
+      traefik.http.routers.auth.priority: '350'
+      traefik.http.routers.exchange.rule: 'Host(`45.77.36.106`) && Path(`/_session_exchange`) && Method(`GET`)'
+      traefik.http.routers.exchange.priority: '400'
+  phorge:
+    labels:
+      traefik.http.routers.phorge.rule: 'Host(`45.77.36.106`)'
+      traefik.http.routers.phorge-files.rule: 'Host(`45.77.36.106`) && PathPrefix(`/file/`)'
+  gorge-notification:
+    labels:
+      traefik.http.routers.notification.rule: 'Host(`45.77.36.106`) && PathPrefix(`/ws/`)'

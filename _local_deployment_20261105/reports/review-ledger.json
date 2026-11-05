@@ -1,0 +1,940 @@
+[
+  {
+    "review_id": "peer-pr48-by-pr50",
+    "reviewer": "atom_author_pr50",
+    "target_pr": 48,
+    "source_head": "5b08bcdfca114bec1925a6c9d9d150f0096e5dd8",
+    "reviewed_atom_count": 219,
+    "reviewed_dataset_sha256": "e9552c51b4e8bcbf0b6eb0c3680bbadef63c45f70263378a79a56f19d0679187",
+    "checks_performed": [
+      "scope",
+      "granularity",
+      "authority",
+      "active/archived states",
+      "four native axes",
+      "direct versus descendant membership",
+      "privacy",
+      "actual controls",
+      "rollback and safe units",
+      "provenance",
+      "source and test reference existence",
+      "legacy mapping and source absence"
+    ],
+    "issues": [
+      {
+        "id": "R48-01",
+        "atom_ids": [
+          "48-ACL-010",
+          "48-ACL-011",
+          "48-ACL-015"
+        ],
+        "severity": "major",
+        "finding": "ACL010原when以NPLC且mode非replace概括拒绝，错误覆盖keep与全局替换预设，且遗漏底层apply的clearBoundary-only不进入policy_change例外。",
+        "correction": "已限定：旧apply仅进入policy_change时add/revoke/remove-rule拒绝；keep及明确replace/全局预设按各模式处理。统一applyForm另在前置阶段拒绝命名策略add/revoke，连边界-only也拒绝；旧apply无主体+clearBoundary可只清边界保持NPLC。对照TeamProjectAccessService::applyInput 603起的分支，最终when/denied/notes一致。",
+        "status": "resolved"
+      },
+      {
+        "id": "R48-02",
+        "atom_ids": [
+          "48-ORG-035",
+          "48-ORG-056"
+        ],
+        "severity": "minor",
+        "finding": "成员变化的version递增与members审计追加是两个独立可观察结果，原ORG035合并二者。",
+        "correction": "ORG035只描述版本递增；新增ORG056独立描述actor/action=members/old-new名单的审计追加，共用replaceMembers实际源和安全事务单元。",
+        "status": "resolved"
+      },
+      {
+        "id": "R48-03",
+        "atom_ids": [
+          "48-ROLE-006",
+          "48-ROLE-027"
+        ],
+        "severity": "minor",
+        "finding": "原ROLE006把admin自动view/edit合为一行且只引用isAutomaticRole，后者只证明edit来源。",
+        "correction": "ROLE006保留admin edit；新增ROLE027独立admin view，真实source为hasAutomaticViewRole；保留传入viewer/project而非helper自行fresh的限定。",
+        "status": "resolved"
+      },
+      {
+        "id": "R48-04",
+        "atom_ids": [
+          "48-ORG-036"
+        ],
+        "severity": "minor",
+        "finding": "setUserTeams的expected_team_phids是默认null的可选CAS合同，不能把UI总传完整集合推广为每次直接服务调用都强制CAS。",
+        "correction": "given/when/title明确非null才执行集合比较；notes标明UI始终提交完整expectedTeams，direct service默认null可跳过该比较。",
+        "status": "resolved"
+      },
+      {
+        "id": "R48-05",
+        "atom_ids": [
+          "48-NAT-002",
+          "48-NAT-003",
+          "48-NAT-008",
+          "48-NAT-009",
+          "48-NAT-010",
+          "48-NAT-012",
+          "48-NAT-013"
+        ],
+        "severity": "minor",
+        "finding": "这些成员维护、预判、列表和导航原子沿用组默认把parent_edit_inheritance标为候选改变，模糊了具体删除父编辑自动来源的NAT004边界。",
+        "correction": "这些行该轴改不涉及；NAT004明确候选改变，里程碑NAT011保留原生；共享safe_unit仍表示源码耦合而非每行都更改四轴。",
+        "status": "resolved"
+      },
+      {
+        "id": "R48-06",
+        "atom_ids": [
+          "48-UI-021",
+          "48-UI-022"
+        ],
+        "severity": "minor",
+        "finding": "原提取未独立列出组织统一方法门禁405及权限页面Quicksand黑名单的完整导航效果。",
+        "correction": "新增UI021（父控制器未提前响应时非GET/POST返回405）和UI022（权限页改用完整导航，增强脚本有初始化入口但不宣称脚本执行成功）；各自引用真实controller/application方法。",
+        "status": "resolved"
+      },
+      {
+        "id": "R48-07",
+        "atom_ids": [
+          "48-ACL-032"
+        ],
+        "severity": "minor",
+        "finding": "已有源JavaScript实现的浏览器confirm提示原先误标源PR仅客户端合同；“仅客户端”不等于“仅外部合同”。",
+        "correction": "已核TeamProjectAccessScriptController内canSwitch实现：dirty或FormData差异触发window.confirm，取消后恢复capability并阻止切换。该行改为源PR已实现，notes仍明确仅浏览器UI提示，不提供服务端授权/版本保障或外部receiver承诺；其余行语义与219条计数保持冻结。",
+        "status": "resolved"
+      }
+    ],
+    "coverage": {
+      "source_review": "独立读取固定PR diff与TeamOrganization存储/服务、TeamOrganizationPolicy边界/授权、TeamProjectMembership角色/成员、TeamProjectTeamPolicy、TeamProjectMemberImport、组织/项目UI及原生Project存储、事务、索引和审计源码；32个diff文件均有行为或support映射。",
+      "dataset_review": "219条字段/schema/依赖及221个源ref、182个test_ref静态存在性复核；全部标题/核心触发结果与重点完整字段核对，最终所有语义修订重读确认。脚本中的inspect()作为实际CLI调用支持引用接受，并未误当脚本方法定义。",
+      "four_axes": "祖先查看要求保留；普通子项目父编辑自动来源被候选删除；父direct与全部普通后代direct聚合为候选改变；历史父direct/child副本保留且只读审计，不宣称自动清理。",
+      "authority_limits": "组织管理是fresh有效site admin；团队scope跳过归档直接起点但可越过归档中间祖先；项目site admin仍需原ACL，仅豁免附加团队边界；viewer edit ceiling不直接禁止join；last-admin只在含role事务且旧有效admin非空时保护；forward意图与inverse完整映射分开；项目导入无额外roster ACL。",
+      "control_and_rollback": "源中无整体feature off/read-only/候选迁移开关，应用不可卸载且默认置顶。项目PICK/ACL/BND/ROLE/MEM/IMP/NAT/WEB统一48-PROJECT-ACCESS-CORE，依赖环以共同发布/回退单元表达，不能逐原子独立上线。回退保留持久解释器/审计/关系并考虑索引重激活历史边风险。",
+      "no_runtime_claim": "未执行Phorge、MySQL、fixture、CLI audit或浏览器测试；未修改源码/PR/部署/账户。引用已有test方法只作追溯。",
+      "final_source_status_recheck": "在已审219条基础上仅复核ACL032的source_status及边界notes修订；真实源JS具备确认/恢复选择/阻止切换实现，非外部未提供实现的客户端合同。未执行浏览器测试。"
+    },
+    "conclusion": "经固定源码静态独立交叉审及最终219条修订复核，R48-01至R48-07均已解决；无未解blocking/major问题。结论仅为原子分析质量审查，不是运行期逐断言PASS、主干采用或部署启用认证。"
+  },
+  {
+    "review_id": "peer-pr49-by-pr48",
+    "reviewer": "atom_author_pr48",
+    "target_pr": 49,
+    "source_head": "4051759aedb701c46b0b859185d08b6873fbd066",
+    "reviewed_atom_count": 135,
+    "reviewed_dataset_sha256": "d514b1f531c31003488962becc284d93620626ee36319775d4ae5ab1048c054a",
+    "checks_performed": [
+      "独立核对固定head相对b0edc13049e562c9d5e7e25e6e848bcc07d1ec40的22文件diff；运行期变更路径均有原子，文档/映射/测试runner支撑有范围说明。",
+      "通读131条定义、触发/结果、actor/given、读取/写入、控制/回退及来源列；对记录追加、旧类型、state/percent投影、授权、来源草稿、任务卡/全局状态与跨对象/Feed范围逐块回源。",
+      "身份核验明确isActiveUser仅检查传入actor对象，项目上下文重查不等于actor禁用/批准fresh；不混入PR48的currentUser实现。",
+      "projectNode通常在GET及保留context的POST重走newTaskDraft，但可以移除参数转普通原生创建；无持久来源绑定/提交锁。服务只检查Maniphest安装可用，任务CAN_CREATE在外层原生创建引擎。",
+      "记录EditPolicy=noone、原生归因/时间、版本二status=null、percent手填投影与评论不改投影；回退保留原记录/旧类型解释，不承诺撤回已交付外部消息。",
+      "无D05/D06整体旗标；新增active/blocked及默认标签是环境未覆盖时的全局默认，非项目局部状态或强制迁移。",
+      "新增Remarkup接入遵从目标任务/文件独立ACL、native reference/mentions；项目记录故事与仍公开任务故事的Feed过滤分别建模。四原生轴不误写为PR49新增候选迁移。",
+      "静态核对全部source/test_ref路径与符号存在；对新增130路由和131Feed来源行复核。test_refs仅为既存源码traceability，未执行Phorge、DB、浏览器、Feed或单测。",
+      "确认最终源repo仍固定HEAD且git status干净；仅写本review报告，未改PR49数据、源码或运行配置。",
+      "最终增量仅复核104/105及新增132–135：普通order与内置query只读请求状态；默认sort/filter需CAN_VIEW+CAN_EDIT和原生isFormPost/CSRF，分别写不同项目默认属性；高级filter仅CAN_VIEW且非public账号门禁，先保存不可变SavedQuery再getErrors，成功导航另列。并核同值ContinueOnNoEffect不保证新增事务、保留查询与历史的补偿边界；未重复全量或执行应用/DB测试。"
+    ],
+    "issues": [
+      {
+        "id": "R49-01",
+        "atom_ids": [
+          "49-ATOM-071",
+          "49-ATOM-131"
+        ],
+        "severity": "major",
+        "finding": "原071把撤权后的原生记录查询和Feed过滤两个独立消费者合并为一个then，妨碍单一可观察结果验收。",
+        "correction": "作者将071限定来源项目记录查询，并新增131单列既有记录Feed故事的撤权过滤；复核TeamProjectProgress::newQuery、原生PhabricatorFeedQuery::willFilterPage及PR新增接入/既有testNativeFeedPublishesProgressAndTaskActivityWithoutPolicyLeaks证据。",
+        "status": "resolved"
+      },
+      {
+        "id": "R49-02",
+        "atom_ids": [
+          "49-ATOM-061",
+          "49-ATOM-062",
+          "49-ATOM-065",
+          "49-ATOM-066",
+          "49-ATOM-070",
+          "49-ATOM-071",
+          "49-ATOM-072",
+          "49-ATOM-110",
+          "49-ATOM-111",
+          "49-ATOM-118",
+          "49-ATOM-119"
+        ],
+        "severity": "minor",
+        "finding": "跨对象引用、Feed和任务状态/评论多行reads继承仅来源项目及记录模板，遗漏实际目标任务/文件/Feed对象及其独立ACL或字典，容易把读取隐私边界缩错。",
+        "correction": "作者逐行改为mentions目标/当前task或file ACL、Feed受众及对象策略、task.status及全局字典、任务CAN_VIEW/CAN_INTERACT；110/111前提也改为原生任务查询已授权的目标任务。最终hash9822ba...逐项复核。",
+        "status": "resolved"
+      },
+      {
+        "id": "R49-03",
+        "atom_ids": [
+          "49-ATOM-086"
+        ],
+        "severity": "minor",
+        "finding": "来源草稿拒绝行given原先预设具备项目edit，与无edit/非法来源统一拒绝场景矛盾。",
+        "correction": "改为请求提供projectNode而来源合法性/可见性/edit尚待newTaskDraft校验；reads明确输入与异常类别，不泄露来源正文。复核ManiphestEditEngine::newProjectRecordDraftException及其捕获入口。",
+        "status": "resolved"
+      },
+      {
+        "id": "R49-04",
+        "atom_ids": [
+          "49-ATOM-104",
+          "49-ATOM-105",
+          "49-ATOM-132",
+          "49-ATOM-133",
+          "49-ATOM-134",
+          "49-ATOM-135"
+        ],
+        "severity": "major",
+        "finding": "根粒度抽查指出原104/105将临时排序/筛选与需CAN_EDIT的项目默认写入、高级筛选的SavedQuery持久化混在两个兼容原子中，执行者、读写范围及后果不同。",
+        "correction": "作者把104/105限只读临时order/内置query；132/133分别列默认排序/默认筛选原生事务；134列高级filter在getErrors之前保存不可变查询，135仅列无errors后的queryKey导航。增量回源BoardView菜单、BoardDefaultController、BoardFilterController、WorkboardViewState、Sort/FilterTransaction、ApplicationSearchEngine::saveQuery以及AphrontRequest::isFormPost/validateCSRF，与非public控制器登录要求一致。新增四行test_refs留空，不以browser GET确认框当POST写入测试证据。",
+        "status": "resolved"
+      },
+      {
+        "id": "R49-05",
+        "atom_ids": [
+          "49-ATOM-132",
+          "49-ATOM-133"
+        ],
+        "severity": "minor",
+        "finding": "初次拆出的默认排序/筛选正向写入未限定新值与旧值有变化，而Controller明确setContinueOnNoEffect(true)，同值提交可能不新增事务行。",
+        "correction": "作者在positive given补实际默认值变化，并在denied/notes说明相同值不保证新增事务；回源原生TransactionEditor过滤no-effect事务分支后核销。",
+        "status": "resolved"
+      }
+    ],
+    "conclusion": "初轮131条全量静态审查及最终104/105、132–135六行增量复核完成，最终数据共135条、hash为本报告所载。所报问题均已修正核销，无未解决blocking/major问题；本次增量未重新宣称全量运行通过，亦非当前main采纳或生产启用认证。"
+  },
+  {
+    "review_id": "peer-pr50-by-pr49",
+    "reviewer": "atom_author_pr49",
+    "target_pr": 50,
+    "source_head": "47f9cd049c1a436e6a5ac377123627c4d2f010b0",
+    "reviewed_atom_count": 178,
+    "reviewed_dataset_sha256": "deb77eefa836a8afae58e7ab9ef00882b494e071d33e724e9237944d6d6bfd98",
+    "checks_performed": [
+      "独立只读确认源repo HEAD=47f9cd049c1a436e6a5ac377123627c4d2f010b0、工作树干净，并按baseline b0edc13049e562c9d5e7e25e6e848bcc07d1ec40审阅全部diff；不使用后来main作为实现来源。",
+      "完整读取entry guard/recovery、可选配置、维护应用/client/list/action controllers、私有policy规则、编辑规则集与策略替代差异；核对文件核心查询、人员拒绝crumb、层级查询/导航/列表、翻译差异。",
+      "运行时改动文件均有对应行为/兼容/控制映射；__phutil_library_map__是这些真实类和测试的加载支撑，.gitignore/docs索引为文档支撑，没有虚构单独产品行为。",
+      "逐域核对单actor/单触发/单结果、当前项目与目标对象读取范围、原生四轴、归档根目录、不可见祖先、历史policy求值与外层对象授权；原生自动成员/负责人/父编辑能力明确为兼容。",
+      "核对CLI/匿名/WEB/已认证API例外、可信peer和provider raw identifier、首绑唯一键/no-op冲突、当前session撤销与按列session清理；源无GC，命名hash key与RPC key区分。",
+      "核对恢复只允许特定mismatch原因的安全HTML GET；不自动重放POST/workflow/API/file，清cookie、303/409与no-store边界。",
+      "核对D02核心mpull按transformedPHID折叠，不误称全来源ANY；D14 seen按值且为每路径16节点祖先预算、循环分支拒绝、builtin先满足深度前提、VOID-only与无来源差异，来源ANY后仍查目标自身FileQuery。",
+      "核对维护UI调用八个固定action、客户端签实际JSON字节/新nonce/稳定request_id、大小/超时/redirect/error封装，未将客户端或测试receiver当真实外部授权、防重放/幂等/密码hash/审计实现。",
+      "核对enabled/enforce-file-policy/maintenance/allow-http默认false与锁定配置；维护开启实际同时注册读写路由，没有源内read-only/write独立旗标。",
+      "核对已发RPC的未知或不可逆外部结果与回退义务，PHP无本地业务写不能推成远端未写；status/password/entry-only保护由receiver实时重判，UI can_*非服务器业务禁令。",
+      "逐条机械校验178行schema字段/枚举、所有sources文件和准确symbol所在行、所有test_refs现有文件/符号；读取现有5个测试类与loopback fixture，不运行测试，不把关联当逐原子PASS。",
+      "重读最终作者修订及SHA；旧134父映射与D01-D19仅作多对多范围参考，E10缺GC只在notes排除，9个EXT条目为源PR仅客户端合同。"
+    ],
+    "issues": [
+      {
+        "id": "R50-01",
+        "atom_ids": [
+          "50-RPC-010",
+          "50-RPC-011",
+          "50-RPC-012",
+          "50-RPC-013",
+          "50-RPC-014",
+          "50-RPC-015",
+          "50-MAC-019"
+        ],
+        "severity": "major",
+        "finding": "curl_exec可能已发送后，原writes仍称无/只读，超时、响应超限、重定向、坏JSON或远端错误不能证明业务未执行。",
+        "correction": "作者已将writes改为PHP无本地业务DB写、请求可能已发送且外部结果可能未知；稳定request_id与外部持久ledger支持核对/重试。已对照TeamMaintenanceClient::call的curl_exec/响应处理及action异常重显复核。",
+        "status": "resolved"
+      },
+      {
+        "id": "R50-02",
+        "atom_ids": [
+          "50-PRI-001",
+          "50-PRI-006",
+          "50-PRI-007",
+          "50-PRI-009",
+          "50-FIL-003",
+          "50-FIL-005"
+        ],
+        "severity": "minor",
+        "finding": "原生既有自动能力及builtin/原文件附载边界用行为kind，容易当PR新增；自然人多条件资格应作为同一谓词约束。",
+        "correction": "PRI006/007/009及FIL003/005改兼容；PRI001改约束并说明同一isEligiblePerson资格谓词。核对固定基线hasAutomaticCapability及新规则未改写这些自动能力。",
+        "status": "resolved"
+      },
+      {
+        "id": "R50-03",
+        "atom_ids": [
+          "50-GFI-005",
+          "50-GFI-006",
+          "50-GFI-007"
+        ],
+        "severity": "minor",
+        "finding": "builtin放行先受seen/depth拒绝，且array $seen按值传递；原描述未完整明确builtin深度前提与每路径预算，可能误读为全图16节点总预算。",
+        "correction": "GFI005给定补seen未含PHID且count<16；GFI006/007明确每路径祖先集合、兄弟分支不污染、非全图预算。已逐行核canViewFile调用和参数传递。",
+        "status": "resolved"
+      },
+      {
+        "id": "R50-04",
+        "atom_ids": [
+          "50-ENT-001",
+          "50-ENT-003"
+        ],
+        "severity": "minor",
+        "finding": "匿名和CLI分支继承已认证HTTP user的通用actor，与各自前提不一致。",
+        "correction": "ENT001改PHP CLI hook进程主体，ENT003改匿名PhabricatorUser请求，并保留匿名文件守卫条件。",
+        "status": "resolved"
+      },
+      {
+        "id": "R50-05",
+        "atom_ids": [
+          "50-MAC-013"
+        ],
+        "severity": "major",
+        "finding": "原行仅entry_only=true且can_disable就保证只呈现撤销，但PHP独立按can_enable追加active；entry_only本身不阻止启用。",
+        "correction": "最终给定要求can_enable=false，denied明确后端若误返true，PHP仍会显示active，receiver必须履行业务合同；不再把UI说明冒充本地强制禁令。已核TeamMaintenanceUserActionController两个独立if分支。",
+        "status": "resolved"
+      },
+      {
+        "id": "R50-06",
+        "atom_ids": [
+          "50-MAC-020"
+        ],
+        "severity": "minor",
+        "finding": "原denied失败不能显示成功notice过强；page按用户可控done查询参数直接显示notice，不能据提示确认业务完成。",
+        "correction": "最终表述仅当前失败控制分支不主动成功跳转；done是展示提示，不验证外部业务完成。已核page的messages/done处理。",
+        "status": "resolved"
+      },
+      {
+        "id": "R50-07",
+        "atom_ids": [
+          "50-MLS-005",
+          "50-MLS-010"
+        ],
+        "severity": "minor",
+        "finding": "搜索词超长清空与分页窗口钳制是两个独立输入结果，原MLS005合行。",
+        "correction": "MLS005仅搜索词规范；新增MLS010单列offset/limit共同定义一页窗口不变量，原子数从177变178。",
+        "status": "resolved"
+      }
+    ],
+    "conclusion": "最终178条固定源分析（169源实现/兼容与9客户端合同）已重核，所列major/minor问题均resolved，未发现未解决阻塞或重大源事实错误。此结论仅覆盖静态分析与报告质量；未执行Phorge、DB、PHP测试、容器、浏览器、网关或外部receiver，不认证主干合并、生产启用、逐原子运行PASS或外部副作用保障。"
+  },
+  {
+    "audit_id": "reference-mapping-audit",
+    "reviewer": "atom_author_pr49",
+    "scope": "仅只读审查legacy_ids→D01-D19/reference134语义关系；未修改任何atom/notes/source，未运行应用测试或DB。",
+    "dataset_snapshots": [
+      {
+        "pr": 48,
+        "source_head": "5b08bcdfca114bec1925a6c9d9d150f0096e5dd8",
+        "baseline": "b0edc13049e562c9d5e7e25e6e848bcc07d1ec40",
+        "atom_count": 219,
+        "dataset_sha256": "e9552c51b4e8bcbf0b6eb0c3680bbadef63c45f70263378a79a56f19d0679187",
+        "changed_ci_workflow_files": [],
+        "mapping_review_sha256": "511ad3fdc5d77a945bb7e1570ab52d6faa509550a28ef41351078cd563450800",
+        "metadata_change_acknowledgement": "根通知48-ACL-032仅源状态UI实现元数据修正，parent映射未变；本次只确认count/hash，不重做PR48行为审查。"
+      },
+      {
+        "pr": 49,
+        "source_head": "4051759aedb701c46b0b859185d08b6873fbd066",
+        "baseline": "b0edc13049e562c9d5e7e25e6e848bcc07d1ec40",
+        "atom_count": 135,
+        "dataset_sha256": "d514b1f531c31003488962becc284d93620626ee36319775d4ae5ab1048c054a",
+        "changed_ci_workflow_files": [],
+        "incremental_mapping_note": "104/105按读命令细化，新增132–135均D06/W03同包原生兼容；只新增4条W03直接范围边，特殊映射分类不变。"
+      },
+      {
+        "pr": 50,
+        "source_head": "47f9cd049c1a436e6a5ac377123627c4d2f010b0",
+        "baseline": "b0edc13049e562c9d5e7e25e6e848bcc07d1ec40",
+        "atom_count": 178,
+        "dataset_sha256": "deb77eefa836a8afae58e7ab9ef00882b494e071d33e724e9237944d6d6bfd98",
+        "changed_ci_workflow_files": []
+      }
+    ],
+    "coverage": {
+      "reference_parent_count": 134,
+      "mapped_reference_count": 125,
+      "unmapped_reference_count": 9,
+      "atom_count": 532,
+      "mapping_edge_count": 709,
+      "unknown_legacy_ids": [],
+      "unmapped_legacy_ids": [
+        "B04",
+        "X01",
+        "X02",
+        "X03",
+        "X04",
+        "X05",
+        "B07",
+        "M09",
+        "E10"
+      ]
+    },
+    "conclusion": "派生reference_relation有必要；映射应为追溯/范围关系，不是继承父项完成/采用/生产状态。125个有映射父项与9个排除父项均能保持完整crosswalk；重点需覆写H09、B05、B08、A19/A20、B03及D07候选语义。",
+    "relation_design": {
+      "unit": "每条atom_id × legacy_id边；单atom可同时含同包直接细分、跨包前置、合同等，不能仅按package相等派一个行级标签。",
+      "suggested_labels": [
+        "同包直接细分",
+        "跨包前置关联",
+        "测试设施关联",
+        "工程/呈现关联",
+        "客户端合同",
+        "语义差异",
+        "源无对应/范围排除"
+      ],
+      "precedence": [
+        "source_status=源PR仅客户端合同优先于包名相等",
+        "明确source与reference当前处置不同优先标语义差异",
+        "B05等工程门禁目标不因同包判直接实现",
+        "剩余不同包按实际门禁/消费者/呈现/工程前置关联",
+        "仅同包且单原子确属父目标实际同语义子行为才标同包直接细分"
+      ],
+      "non_implications": [
+        "同包直接细分也不代表本轮测试PASS或main/生产已采用。",
+        "跨包前置关联不自动授予父包实现计数或完成状态。",
+        "客户端合同不能升级为外部receiver已实现。",
+        "原生兼容不变量不是源PR新发明的功能。"
+      ],
+      "if_only_four_labels": "若展示只能四类，可将测试设施/工程呈现并入关联类，但应改名“前置/工程关联”而非强称跨包；用relation_note保留同包工程关联的具体范围。"
+    },
+    "special_mapping_assessments": [
+      {
+        "legacy_id": "H09",
+        "atom_ids": [
+          "49-ATOM-026",
+          "49-ATOM-028",
+          "49-ATOM-029",
+          "49-ATOM-030",
+          "49-ATOM-031",
+          "49-ATOM-032",
+          "49-ATOM-064",
+          "49-ATOM-070",
+          "49-ATOM-071",
+          "49-ATOM-072",
+          "49-ATOM-075",
+          "49-ATOM-131"
+        ],
+        "suggested_relation": "跨包前置关联",
+        "conclusion": "现有12个D05/D06原生消费者原子不能单独计为D12组合历史/Feed撤权实现。独立原生项目ACL撤权的直接父映射是H13；团队/角色多来源组合必须另有组合实现/验收证据。"
+      },
+      {
+        "legacy_id": "B05",
+        "atom_ids": [
+          "49-ATOM-120",
+          "49-ATOM-125",
+          "49-ATOM-126"
+        ],
+        "suggested_relation": "测试设施关联",
+        "conclusion": "虽同属D01，也仅有测试类/临时fixture/便携runner/cleanup与持久断言；三个固定diff均无CI workflow修改，不证明required checks、branch protection或自动合并门禁。"
+      },
+      {
+        "legacy_id": "B08",
+        "atom_ids": [
+          "50-FIL-006"
+        ],
+        "suggested_relation": "语义差异",
+        "conclusion": "固定source core mpull按transformedPHID折叠单origin，顺序未保证；reference134当前包处置写core ANY，不能继承其已交付状态。"
+      },
+      {
+        "legacy_id": "B08",
+        "atom_ids": [
+          "50-GFI-007"
+        ],
+        "suggested_relation": "语义差异",
+        "conclusion": "可选D14实现逐路径source ANY，但仍需目标自身native查询；不是D02核心改为ANY，也不代表可选守卫与core合成必然放行任意可见来源。"
+      },
+      {
+        "legacy_id": "F02",
+        "atom_ids": [
+          "50-FIL-006",
+          "50-FIL-007",
+          "50-GFI-007"
+        ],
+        "suggested_relation": "语义差异/范围关联",
+        "conclusion": "core折叠、沿原生parentQuery及可选守卫是不同层；不能把关联三个源码事实合并成reference当前多来源ANY或完整循环/深度验证已通过。"
+      },
+      {
+        "legacy_id": "B01",
+        "atom_ids": [
+          "48-SUP-004",
+          "49-ATOM-120",
+          "49-ATOM-121"
+        ],
+        "suggested_relation": "局部同包直接细分或测试设施关联",
+        "conclusion": "48-SUP-004直接对应新增类映射局部；49测试fixture/源快照为工程关联。它们均不证明后续集成基线、map gate与main状态。"
+      },
+      {
+        "legacy_id": "B03",
+        "atom_ids": [
+          "50-LOC-001",
+          "50-LOC-002",
+          "50-LOC-003"
+        ],
+        "suggested_relation": "工程/呈现关联",
+        "conclusion": "PR50三处具体中文文案不是完整双语/占位符回归设施，尤其不能借B03父采用状态宣称修复PR49固定中文英文环境问题。"
+      },
+      {
+        "legacy_id": "A19",
+        "atom_ids": [
+          "50-RPC-006",
+          "50-EXT-001",
+          "50-EXT-002",
+          "50-EXT-003",
+          "50-EXT-009"
+        ],
+        "suggested_relation": "按客户端实现前置与客户端合同分开",
+        "conclusion": "RPC006是源内fresh nonce；EXT001/002/003/009是外部授权/nonce账本/操作账本/去敏合同，无生产receiver。"
+      },
+      {
+        "legacy_id": "A20",
+        "atom_ids": [
+          "50-RPC-003",
+          "50-RPC-006",
+          "50-MAC-001",
+          "50-MAC-002",
+          "50-MAC-012",
+          "50-MAC-019",
+          "50-EXT-003"
+        ],
+        "suggested_relation": "PHP操作ID局部细分/跨包前置关联；EXT003仅客户端合同",
+        "conclusion": "ID格式/生成/重显/携带是客户端已实现；参数绑定、持久结果与重启恢复仅外部合同，不能把整个A20视为本源已实现。"
+      },
+      {
+        "legacy_id": "D07-current-disposition",
+        "atom_ids": [
+          "48-NAT-001",
+          "48-NAT-002",
+          "48-NAT-003",
+          "48-NAT-004",
+          "48-NAT-006",
+          "48-NAT-007",
+          "48-NAT-008",
+          "48-NAT-009",
+          "48-NAT-010",
+          "48-NAT-012",
+          "48-NAT-013"
+        ],
+        "suggested_relation": "语义差异",
+        "conclusion": "这些同包源码候选改变可追溯到M01/M02/M03/M04/M08原始目标，但reference134当前处置保留原生四轴；不能用同包直接细分掩盖候选source与当前采用方案不同。M05祖先查看、M06里程碑原生保持和M07只读审计需逐条按其实际范围另判。"
+      }
+    ],
+    "cross_package_edges": [
+      {
+        "atom_id": "48-UI-017",
+        "atom_package": "D08",
+        "legacy_id": "G10",
+        "legacy_package": "D09",
+        "suggested_relation": "跨包前置关联",
+        "reason": "共享消费者、门禁、呈现或工程支撑；不能继承父包采用状态或证明整个父目标。"
+      },
+      {
+        "atom_id": "49-ATOM-026",
+        "atom_package": "D05",
+        "legacy_id": "H09",
+        "legacy_package": "D12",
+        "suggested_relation": "跨包前置关联",
+        "reason": "只接入当前native CAN_VIEW/CAN_EDIT/Feed或相关用户上下文，不实现独立D12团队+角色来源组合或其撤权验收。"
+      },
+      {
+        "atom_id": "49-ATOM-028",
+        "atom_package": "D05",
+        "legacy_id": "H09",
+        "legacy_package": "D12",
+        "suggested_relation": "跨包前置关联",
+        "reason": "只接入当前native CAN_VIEW/CAN_EDIT/Feed或相关用户上下文，不实现独立D12团队+角色来源组合或其撤权验收。"
+      },
+      {
+        "atom_id": "49-ATOM-029",
+        "atom_package": "D05",
+        "legacy_id": "H09",
+        "legacy_package": "D12",
+        "suggested_relation": "跨包前置关联",
+        "reason": "只接入当前native CAN_VIEW/CAN_EDIT/Feed或相关用户上下文，不实现独立D12团队+角色来源组合或其撤权验收。"
+      },
+      {
+        "atom_id": "49-ATOM-030",
+        "atom_package": "D05",
+        "legacy_id": "H09",
+        "legacy_package": "D12",
+        "suggested_relation": "跨包前置关联",
+        "reason": "只接入当前native CAN_VIEW/CAN_EDIT/Feed或相关用户上下文，不实现独立D12团队+角色来源组合或其撤权验收。"
+      },
+      {
+        "atom_id": "49-ATOM-031",
+        "atom_package": "D05",
+        "legacy_id": "H09",
+        "legacy_package": "D12",
+        "suggested_relation": "跨包前置关联",
+        "reason": "只接入当前native CAN_VIEW/CAN_EDIT/Feed或相关用户上下文，不实现独立D12团队+角色来源组合或其撤权验收。"
+      },
+      {
+        "atom_id": "49-ATOM-032",
+        "atom_package": "D05",
+        "legacy_id": "H09",
+        "legacy_package": "D12",
+        "suggested_relation": "跨包前置关联",
+        "reason": "只接入当前native CAN_VIEW/CAN_EDIT/Feed或相关用户上下文，不实现独立D12团队+角色来源组合或其撤权验收。"
+      },
+      {
+        "atom_id": "49-ATOM-064",
+        "atom_package": "D05",
+        "legacy_id": "H09",
+        "legacy_package": "D12",
+        "suggested_relation": "跨包前置关联",
+        "reason": "只接入当前native CAN_VIEW/CAN_EDIT/Feed或相关用户上下文，不实现独立D12团队+角色来源组合或其撤权验收。"
+      },
+      {
+        "atom_id": "49-ATOM-070",
+        "atom_package": "D05",
+        "legacy_id": "H09",
+        "legacy_package": "D12",
+        "suggested_relation": "跨包前置关联",
+        "reason": "只接入当前native CAN_VIEW/CAN_EDIT/Feed或相关用户上下文，不实现独立D12团队+角色来源组合或其撤权验收。"
+      },
+      {
+        "atom_id": "49-ATOM-071",
+        "atom_package": "D05",
+        "legacy_id": "H09",
+        "legacy_package": "D12",
+        "suggested_relation": "跨包前置关联",
+        "reason": "只接入当前native CAN_VIEW/CAN_EDIT/Feed或相关用户上下文，不实现独立D12团队+角色来源组合或其撤权验收。"
+      },
+      {
+        "atom_id": "49-ATOM-072",
+        "atom_package": "D05",
+        "legacy_id": "W06",
+        "legacy_package": "D06",
+        "suggested_relation": "跨包前置关联",
+        "reason": "共享消费者、门禁、呈现或工程支撑；不能继承父包采用状态或证明整个父目标。"
+      },
+      {
+        "atom_id": "49-ATOM-072",
+        "atom_package": "D05",
+        "legacy_id": "H09",
+        "legacy_package": "D12",
+        "suggested_relation": "跨包前置关联",
+        "reason": "只接入当前native CAN_VIEW/CAN_EDIT/Feed或相关用户上下文，不实现独立D12团队+角色来源组合或其撤权验收。"
+      },
+      {
+        "atom_id": "49-ATOM-075",
+        "atom_package": "D06",
+        "legacy_id": "H09",
+        "legacy_package": "D12",
+        "suggested_relation": "跨包前置关联",
+        "reason": "只接入当前native CAN_VIEW/CAN_EDIT/Feed或相关用户上下文，不实现独立D12团队+角色来源组合或其撤权验收。"
+      },
+      {
+        "atom_id": "49-ATOM-077",
+        "atom_package": "D06",
+        "legacy_id": "H06",
+        "legacy_package": "D05",
+        "suggested_relation": "跨包前置关联",
+        "reason": "共享消费者、门禁、呈现或工程支撑；不能继承父包采用状态或证明整个父目标。"
+      },
+      {
+        "atom_id": "49-ATOM-079",
+        "atom_package": "D06",
+        "legacy_id": "H04",
+        "legacy_package": "D05",
+        "suggested_relation": "跨包前置关联",
+        "reason": "共享消费者、门禁、呈现或工程支撑；不能继承父包采用状态或证明整个父目标。"
+      },
+      {
+        "atom_id": "49-ATOM-080",
+        "atom_package": "D06",
+        "legacy_id": "H06",
+        "legacy_package": "D05",
+        "suggested_relation": "跨包前置关联",
+        "reason": "共享消费者、门禁、呈现或工程支撑；不能继承父包采用状态或证明整个父目标。"
+      },
+      {
+        "atom_id": "49-ATOM-091",
+        "atom_package": "D05",
+        "legacy_id": "W01",
+        "legacy_package": "D06",
+        "suggested_relation": "跨包前置关联",
+        "reason": "共享消费者、门禁、呈现或工程支撑；不能继承父包采用状态或证明整个父目标。"
+      },
+      {
+        "atom_id": "49-ATOM-096",
+        "atom_package": "D06",
+        "legacy_id": "H01",
+        "legacy_package": "D05",
+        "suggested_relation": "跨包前置关联",
+        "reason": "共享消费者、门禁、呈现或工程支撑；不能继承父包采用状态或证明整个父目标。"
+      },
+      {
+        "atom_id": "49-ATOM-111",
+        "atom_package": "D06",
+        "legacy_id": "W05",
+        "legacy_package": "D13",
+        "suggested_relation": "跨包前置关联",
+        "reason": "共享消费者、门禁、呈现或工程支撑；不能继承父包采用状态或证明整个父目标。"
+      },
+      {
+        "atom_id": "49-ATOM-119",
+        "atom_package": "D05",
+        "legacy_id": "W02",
+        "legacy_package": "D06",
+        "suggested_relation": "跨包前置关联",
+        "reason": "共享消费者、门禁、呈现或工程支撑；不能继承父包采用状态或证明整个父目标。"
+      },
+      {
+        "atom_id": "49-ATOM-126",
+        "atom_package": "D01",
+        "legacy_id": "H04",
+        "legacy_package": "D05",
+        "suggested_relation": "测试设施关联",
+        "reason": "便携验收断言相关业务持久结果，不是父业务行为本身的新实现或测试通过证据。"
+      },
+      {
+        "atom_id": "49-ATOM-126",
+        "atom_package": "D01",
+        "legacy_id": "H11",
+        "legacy_package": "D06",
+        "suggested_relation": "测试设施关联",
+        "reason": "便携验收断言相关业务持久结果，不是父业务行为本身的新实现或测试通过证据。"
+      },
+      {
+        "atom_id": "49-ATOM-131",
+        "atom_package": "D05",
+        "legacy_id": "H09",
+        "legacy_package": "D12",
+        "suggested_relation": "跨包前置关联",
+        "reason": "只接入当前native CAN_VIEW/CAN_EDIT/Feed或相关用户上下文，不实现独立D12团队+角色来源组合或其撤权验收。"
+      },
+      {
+        "atom_id": "50-CFG-007",
+        "atom_package": "D15",
+        "legacy_id": "A01",
+        "legacy_package": "D16",
+        "suggested_relation": "跨包前置关联",
+        "reason": "共享消费者、门禁、呈现或工程支撑；不能继承父包采用状态或证明整个父目标。"
+      },
+      {
+        "atom_id": "50-GFI-007",
+        "atom_package": "D14",
+        "legacy_id": "F02",
+        "legacy_package": "D02",
+        "suggested_relation": "语义差异",
+        "reason": "可选D14守卫source-ANY与D02核心ANY不是同层实现；目标自身FileQuery仍可能按核心折叠拒绝。"
+      },
+      {
+        "atom_id": "50-GFI-007",
+        "atom_package": "D14",
+        "legacy_id": "B08",
+        "legacy_package": "D02",
+        "suggested_relation": "语义差异",
+        "reason": "可选D14守卫source-ANY与D02核心ANY不是同层实现；目标自身FileQuery仍可能按核心折叠拒绝。"
+      },
+      {
+        "atom_id": "50-GFI-008",
+        "atom_package": "D14",
+        "legacy_id": "F03",
+        "legacy_package": "D02",
+        "suggested_relation": "语义差异",
+        "reason": "D14 VOID-only nonbuiltin拒绝，与核心profile VOID兼容不同，不能继承F03核心可见性结论。"
+      },
+      {
+        "atom_id": "50-RPC-006",
+        "atom_package": "D16",
+        "legacy_id": "A19",
+        "legacy_package": "D18",
+        "suggested_relation": "跨包前置关联",
+        "reason": "客户端fresh nonce只是外部防重放合同的前置证据，不是持久nonce/operation账本。"
+      },
+      {
+        "atom_id": "50-MAD-003",
+        "atom_package": "D16",
+        "legacy_id": "A14",
+        "legacy_package": "D17",
+        "suggested_relation": "跨包前置关联",
+        "reason": "共享消费者、门禁、呈现或工程支撑；不能继承父包采用状态或证明整个父目标。"
+      },
+      {
+        "atom_id": "50-MAD-004",
+        "atom_package": "D16",
+        "legacy_id": "A14",
+        "legacy_package": "D17",
+        "suggested_relation": "跨包前置关联",
+        "reason": "共享消费者、门禁、呈现或工程支撑；不能继承父包采用状态或证明整个父目标。"
+      },
+      {
+        "atom_id": "50-MAD-005",
+        "atom_package": "D16",
+        "legacy_id": "A14",
+        "legacy_package": "D17",
+        "suggested_relation": "跨包前置关联",
+        "reason": "共享消费者、门禁、呈现或工程支撑；不能继承父包采用状态或证明整个父目标。"
+      },
+      {
+        "atom_id": "50-MLS-009",
+        "atom_package": "D16",
+        "legacy_id": "A10",
+        "legacy_package": "D17",
+        "suggested_relation": "跨包前置关联",
+        "reason": "共享消费者、门禁、呈现或工程支撑；不能继承父包采用状态或证明整个父目标。"
+      },
+      {
+        "atom_id": "50-MLS-009",
+        "atom_package": "D16",
+        "legacy_id": "A12",
+        "legacy_package": "D17",
+        "suggested_relation": "跨包前置关联",
+        "reason": "共享消费者、门禁、呈现或工程支撑；不能继承父包采用状态或证明整个父目标。"
+      },
+      {
+        "atom_id": "50-MAC-001",
+        "atom_package": "D17",
+        "legacy_id": "A20",
+        "legacy_package": "D16",
+        "suggested_relation": "跨包前置关联",
+        "reason": "PHP侧生成、携带或重显request_id，不等于外部将actor/action/target/input绑定并持久结果。"
+      },
+      {
+        "atom_id": "50-MAC-002",
+        "atom_package": "D17",
+        "legacy_id": "A20",
+        "legacy_package": "D16",
+        "suggested_relation": "跨包前置关联",
+        "reason": "PHP侧生成、携带或重显request_id，不等于外部将actor/action/target/input绑定并持久结果。"
+      },
+      {
+        "atom_id": "50-MAC-012",
+        "atom_package": "D17",
+        "legacy_id": "A20",
+        "legacy_package": "D16",
+        "suggested_relation": "跨包前置关联",
+        "reason": "PHP侧生成、携带或重显request_id，不等于外部将actor/action/target/input绑定并持久结果。"
+      },
+      {
+        "atom_id": "50-MAC-019",
+        "atom_package": "D17",
+        "legacy_id": "A18",
+        "legacy_package": "D16",
+        "suggested_relation": "跨包前置关联",
+        "reason": "共享消费者、门禁、呈现或工程支撑；不能继承父包采用状态或证明整个父目标。"
+      },
+      {
+        "atom_id": "50-MAC-019",
+        "atom_package": "D17",
+        "legacy_id": "A20",
+        "legacy_package": "D16",
+        "suggested_relation": "跨包前置关联",
+        "reason": "PHP侧生成、携带或重显request_id，不等于外部将actor/action/target/input绑定并持久结果。"
+      },
+      {
+        "atom_id": "50-EXT-001",
+        "atom_package": "D18",
+        "legacy_id": "A01",
+        "legacy_package": "D16",
+        "suggested_relation": "客户端合同",
+        "reason": "外部接收者义务；源PR没有对应生产receiver实现。"
+      },
+      {
+        "atom_id": "50-EXT-003",
+        "atom_package": "D18",
+        "legacy_id": "A20",
+        "legacy_package": "D16",
+        "suggested_relation": "客户端合同",
+        "reason": "外部接收者义务；源PR没有对应生产receiver实现。"
+      },
+      {
+        "atom_id": "50-EXT-009",
+        "atom_package": "D16",
+        "legacy_id": "A19",
+        "legacy_package": "D18",
+        "suggested_relation": "客户端合同",
+        "reason": "外部接收者义务；源PR没有对应生产receiver实现。"
+      },
+      {
+        "atom_id": "50-LOC-001",
+        "atom_package": "D03",
+        "legacy_id": "P06",
+        "legacy_package": "D13",
+        "suggested_relation": "跨包前置关联",
+        "reason": "仅把administrator/author文案说明得更准，不新赋予creator/admin规则或变更授权。"
+      },
+      {
+        "atom_id": "50-LOC-001",
+        "atom_package": "D03",
+        "legacy_id": "P07",
+        "legacy_package": "D13",
+        "suggested_relation": "跨包前置关联",
+        "reason": "仅把administrator/author文案说明得更准，不新赋予creator/admin规则或变更授权。"
+      },
+      {
+        "atom_id": "50-LOC-001",
+        "atom_package": "D03",
+        "legacy_id": "B03",
+        "legacy_package": "D01",
+        "suggested_relation": "工程/呈现关联",
+        "reason": "只有具体中文标签变动，非D01完整双语、占位符回归或CI门禁交付。"
+      },
+      {
+        "atom_id": "50-LOC-002",
+        "atom_package": "D03",
+        "legacy_id": "B03",
+        "legacy_package": "D01",
+        "suggested_relation": "工程/呈现关联",
+        "reason": "只有具体中文标签变动，非D01完整双语、占位符回归或CI门禁交付。"
+      },
+      {
+        "atom_id": "50-LOC-003",
+        "atom_package": "D03",
+        "legacy_id": "P07",
+        "legacy_package": "D13",
+        "suggested_relation": "跨包前置关联",
+        "reason": "仅把administrator/author文案说明得更准，不新赋予creator/admin规则或变更授权。"
+      },
+      {
+        "atom_id": "50-LOC-003",
+        "atom_package": "D03",
+        "legacy_id": "B03",
+        "legacy_package": "D01",
+        "suggested_relation": "工程/呈现关联",
+        "reason": "只有具体中文标签变动，非D01完整双语、占位符回归或CI门禁交付。"
+      }
+    ],
+    "unmapped_parent_assessments": [
+      {
+        "legacy_ids": [
+          "B04"
+        ],
+        "assessment": "合理无源实现对应",
+        "reason": "版本化原生ADR、消费者清单、升级/当前处置方案是后续设计治理；固定PR48的候选权限改动和只读audit不能冒充ADR交付。"
+      },
+      {
+        "legacy_ids": [
+          "B07"
+        ],
+        "assessment": "合理无源实现对应",
+        "reason": "三份固定diff没有混合版本发布事实清单/开关转换协议校验器；generic安装/回退文档及safe_unit依赖不是B07实现。"
+      },
+      {
+        "legacy_ids": [
+          "M09"
+        ],
+        "assessment": "合理排除本次源PR范围",
+        "reason": "父项源为PR47；PR48未改Web EditController slug处理，EditEngine变化为policy field锁定和成员字段，不应为未改原生slug规则造新原子。"
+      },
+      {
+        "legacy_ids": [
+          "X01",
+          "X02",
+          "X03",
+          "X04",
+          "X05"
+        ],
+        "assessment": "合理排除PR47移交流程",
+        "reason": "受控权限移交属于PR47；PR48自身状态token、last-admin和显式角色继任不等于actor/session/request/前后状态绑定确认令牌、锁下最终接收者验证及整批回滚协议。"
+      },
+      {
+        "legacy_ids": [
+          "E10"
+        ],
+        "assessment": "合理源无实现",
+        "reason": "绑定到期索引/时间同步及didLogout按明确sessionKey删除不构成到期GC；PR50无分批清理worker/CLI/安全过期判定。"
+      }
+    ],
+    "verification_limits": "仅复核reference134、三个最终dataset/notes、已读固定source差异及本轮PR48 EditEngine差异/三源changed file清单；不验证后续main当前状态、远端required checks/生产配置或外部服务执行结果。",
+    "integration_note": "根已报告派生reference_relation按H09前置、B05测试支撑、B03呈现/工程关联、B08语义差异、A19/A20客户端实现与外部合同等区分；原子原始legacy_ids保持追溯值，不自动继承父采用/生产状态。",
+    "final_incremental_update_scope": "本次仅更新PR49新增4行后的count/hash与总映射边数量；按根通知确认PR48单行源状态元数据新hash；未重新审查其他冻结数据或修改任何作者dataset。"
+  }
+]
